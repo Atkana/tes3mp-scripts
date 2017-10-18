@@ -1,4 +1,4 @@
--- classInfo - Release 1 - For tes3mp v0.6.1
+-- classInfo - Release 1.1 - For tes3mp v0.6.1
 -- save as classInfo.lua in the scripts folder
 
 --[[ INFO
@@ -270,10 +270,8 @@ end
 
 local function getPlayerClass(pid)
 	if tes3mp.IsClassDefault(pid) == 1 then
-		tes3mp.LogMessage(1, "DEBUG: Class is default")
 		return getDefaultClass(Players[pid].data.character.class)
 	else
-		tes3mp.LogMessage(1, "DEBUG: Class is custom")
 		return makeCustom(pid)
 	end
 end
