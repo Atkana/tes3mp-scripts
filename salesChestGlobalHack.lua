@@ -265,6 +265,7 @@ Methods.OnSalesChestCommand = function(pid)
 	--HACK
 	if pchest == nil then
 		AssignSalesChest(pid, config.globalRefIndex, config.globalRefId, config.globalCell)
+		pchest = GetSalesChest(pid)
 	end
 	
 	--If the player sales chest is valid and still exists then they get a custom message.
