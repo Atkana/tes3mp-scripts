@@ -1,4 +1,4 @@
--- flatModifiers (Advanced) - Release 1 - For tes3mp v0.6.1
+-- flatModifiers (Advanced) - Release 1 - For tes3mp v0.6.1. Requires classInfo.
 
 --[[ INSTALLATION
 1) Save this file as "flatModifiers.lua" in mp-stuff/scripts
