@@ -1,4 +1,4 @@
--- salesChest - Release 1 - For tes3mp v0.6.1
+-- salesChest - Release 2 - For tes3mp v0.6.1
 
 --[[ INSTALLATION:
 1) Save this file as "salesChest.lua" in mp-stuff/scripts
@@ -19,13 +19,34 @@
 local config = {}
 
 --Main Config Options
-config.creatureMerchants = false --If true, items will sell for 100% of their base price, otherwise the price will be modified by their mercantile skill, using the skill as a percentage (level 42 mercantile means they get 42% of the price)
 config.considerItemWear = true -- Whether to modify the price of an item based on its current durability/uses
 config.ultimateMultiplier = 1 -- After all the price calculations, the price is then multiplied by this amount. Alter this if you want to make selling via sales chest to be more/less favourable compared to regular trading. For 75%, this variable would be 0.75
 --Minor Config Options
 config.assignContainerTimeout = 30 --Time players have to assign a new container after selecting the option in the GUI
 config.shareChests = true --If true, multiple players are allowed to use the same container as their sales chest
 config.guiId = 31336 --Used internally for the GUI id. If this randomly generated number somehow conflicts with another script's, change this number.
+
+--Release 2 additions
+config.mode = "private" -- "private" or "global". In private mode, players claim their own containers to sell from. In global mode, while players can still claim their own containers, they sell items from a globally designated chest (designated by the following config options:)
+-- The following must be manually entered
+config.globalRefIndex = ""
+config.globalCell = ""
+config.globalRefId = ""
+
+config.sellMode = "basic" --governs how the price of items are calculated, see the list below for all the options and details.
+--[[ List of sellModes:
+"creature" - The price isn't modified by any skill, as if they were being sold to the creature merchants
+"basic" - The price of items sold is modified by the seller's mercantile skill, using the skill as a percentage (level 42 mercantile means they get 42% of the price)
+"tac" - The base price of items sold begins at a flat percent (default: 50%), with the percentage increasing by a set amount (default: 0.5%) for every point in mercantile. The system is entirely lifted from the Oblivion mod "Trade and Commerce"
+"advanced" - The price is modified by a simplified version of the game's price calculation formula. Attributes aren't factored into the simplified calculation, though a player's personality is used as a stand-in for disposition. Note: because this uses Morrowind's calculation formula, it includes all the jankiness that comes with it (look up the Merchant Bug)
+]]
+-- Config options for "tac" sell mode
+config.tacBase = 0.5 --Base percent use
+config.tacMercIncrease = 0.005 --The percent bonus added for each level in mercantile (0.005 is 0.5%)
+config.tacPersIncrease = 0 --The percent bonus added for each point of personality
+-- Config options for "advanced" sell mode
+config.advTraderSkill = 50 --The effective mercantile skill that the fake trader has
+config.advPersonalityMod = 1 --% to modify personality by when using it to calculate the disposition with the fake trader
 
 Methods = {}
 
@@ -52,12 +73,15 @@ local pendingAssignments = {}
 -- Not sure of the implications of leaving some of my functions to be non-local, so I'll make them usable and local here:
 local GetSalesChestTable, GetSalesChest, RegisterAssignmentTimer, UnassignSalesChest, ValidSalesChestCheck, UnregisterAssignmentTimer, SalesChestRegisterTimeout, AssignSalesChest, CheckChestExists, GetContainerInventory, SellChestContents, GetModifiedPrice, OnSellButton, unequipActor
 
+--This is the special chest used by everyone when config.mode is global
+local gchest = {}
+
 -- =======
 --  SELLING
 -- =======
 
 --Return modified base price for if damaged (if weapon or armour), or used (if hammer, pick, probe, etc.), as well as based on the player's merch skill
-function GetModifiedPrice(item, merchSkill)
+function GetModifiedPrice(item, merchSkill, personality)
 	local price = 0 --Start at base price
 	local idata = itemInfo.GetItemData(item.refId)
 	
@@ -97,13 +121,28 @@ function GetModifiedPrice(item, merchSkill)
 		end
 	end
 	
-	--Merchant skill calculation
-	if config.creatureMerchants then --Finished
+	--New Merchant skill calculation
+	if config.sellMode == "creature" then
 		--Do nothing
-	else --Consider the player's merchant skills
-		--Until I can think up a decent calculation, the player's merchant skill will simply represent the % of the price they can get
-		price = price * (math.min(merchSkill,100)/100) --math min to cap merchSkill at 100, though I don't see why it would ever be over that
+	elseif config.sellMode == "tac" then
+		local mod = math.min(config.tacBase + (config.tacMercIncrease * merchSkill) + (config.tacPersIncrease * personality), 1) --Capped at 1 (100%)
+		
+		price = price * mod		
+	elseif config.sellMode == "advanced" then
+		-- Extrapolated from https://wiki.openmw.org/index.php?title=Research:Trading_and_Services#Barter_function
+		local pcTerm = (personality * config.advPersonalityMod) - 50 + merchSkill
+		local npcTerm = config.advTraderSkill
+		
+		local buyTerm = 0.01 * (100 - 0.5 * (pcTerm - npcTerm))
+		local sellTerm = 0.01 * (50 - 0.5 * (npcTerm - pcTerm))
+		
+		local mod = math.min(buyTerm,sellTerm)
+		
+		price = price * mod
+	else -- Assume we're using the basic mode
+		price = price * (math.min(merchSkill,100)/100)
 	end
+	
 	--Multiply by the ultimate multiplier as outlined in the configs
 	price = price * config.ultimateMultiplier
 	--Price is rounded down before being returned
@@ -154,14 +193,14 @@ function GetContainerInventory(chest)
 end
 
 --Function to sell the chest contents and price up the chest contents rolled into one.
-function SellChestContents(chest, priceOnly, merchSkill)
+function SellChestContents(chest, priceOnly, merchSkill, personality)
 	inv = GetContainerInventory(chest)
 	local itemNum = 0
 	local sellNum = 0
 	local price = 0
 	
 	for index, item in pairs(inv) do
-		local iprice = GetModifiedPrice(item, merchSkill)
+		local iprice = GetModifiedPrice(item, merchSkill, personality)
 		itemNum = itemNum + (1 * item.count)
 		
 		--Only sell items that'll fetch a non-zero price
@@ -193,38 +232,50 @@ end
 
 OnSellButton = function(pid)
 	local pmerch = tes3mp.GetSkillBase(pid, 24)
-	local pchest
+	local ppers = tes3mp.GetAttributeBase(pid, 6)
+	local chest
 	
-	--Make sure they actually have a sales chest
-	if GetSalesChest(pid) then --Player currently has a chest recorded
-		pchest = GetSalesChest(pid)
-		--Make sure that container still exists
-		local existsCheck = CheckChestExists(pchest, pid)
-		if existsCheck == false then
-			pchest = nil
+	
+	if config.mode == "global" then
+		local gExistsCheck = CheckChestExists(gchest)
+		if gExistsCheck then
+			chest = gchest
+		else
+			tes3mp.MessageBox(pid, -1, "The global container doesn't exist anymore.")
+			return false
+		end		
+	else
+		--Make sure they actually have a sales chest
+		if GetSalesChest(pid) then --Player currently has a chest recorded
+			chest = GetSalesChest(pid)
+			--Make sure that container still exists
+			local existsCheck = CheckChestExists(chest, pid)
+			if existsCheck == false then
+				chest = nil
+			end
+		end
+		
+		if chest == nil then
+			tes3mp.MessageBox(pid, -1, "You need to assign a container before you can sell its contents!")
+			return false
 		end
 	end
 	
-	if pchest == nil then
-		tes3mp.MessageBox(pid, -1, "You need to assign a container before you can sell its contents!")
-		return false
-	end
+	--Do checks to make sure the situation hasn't changed since the player opened the GUI. May be buggy if more than one player is doing this while global is enabled
+	 local checkItemNum, checkSellableNum, checkEvaluation = SellChestContents(chest, true, pmerch, ppers)
 	
-	--Do checks to make sure the situation hasn't changed since the player opened the GUI
-	local checkItemNum, checkSellableNum, checkEvaluation = SellChestContents(pchest, true, pmerch)
-	
-	if (checkItemNum ~= pchest.itemNum) or (checkSellableNum ~= pchest.sellableNum) or (checkEvaluation ~= pchest.evaluation) then
+	if (checkItemNum ~= chest.itemNum) or (checkSellableNum ~= chest.sellableNum) or (checkEvaluation ~= chest.evaluation) then
 		tes3mp.MessageBox(pid, -1, "The contents of your container have changed, please try again.")
 		return false
 	end
 	
-	if pchest.evaluation <= 0 then
+	if chest.evaluation <= 0 then
 		--Nothing to sell
 		return false
 	end
 	
 	--If we've gotten here, we're free to go
-	local money = SellChestContents(pchest, false, pmerch)
+	local money = SellChestContents(chest, false, pmerch, ppers)
 	--Add money to player inventory
 	local goldLoc = inventoryHelper.getItemIndex(Players[pid].data.inventory, "gold_001", -1)
 	
@@ -244,9 +295,10 @@ end
 
 Methods.OnSalesChestCommand = function(pid)
 	local pname = tes3mp.GetName(pid)
-	local message
+	local message = ""
 	local pchest
 	local pmerch = tes3mp.GetSkillBase(pid, 24)
+	local ppers = tes3mp.GetAttributeBase(pid, 6)
 
 	if GetSalesChest(pid) then --Player currently has a chest recorded
 		pchest = GetSalesChest(pid)
@@ -257,15 +309,29 @@ Methods.OnSalesChestCommand = function(pid)
 		end
 	end
 	
+	if config.mode == "global" then
+		gchest.refIndex = config.globalRefIndex
+		gchest.cell = config.globalCell
+		gchest.refId = config.globalRefId
+		
+		message = message .. "Global mode is enabled on this server, this means that while you can still assign yourself a private container, only the globally-assigned sales chest can be used for selling.\n"
+		
+		local gExistsCheck = CheckChestExists(gchest)
+		if gExistsCheck then
+			gchest.itemNum, gchest.sellableNum, gchest.evaluation = SellChestContents(gchest, true, pmerch, ppers)
+			message = message .. "The global sales chest:\n" .. "Name: " .. gchest.refId .. "\nLocated in :" .. gchest.cell .. "\n" .. gchest.sellableNum .. "/" .. gchest.itemNum .. " of the items contained within can be sold for a total of " .. gchest.evaluation .. " gold.\n\n"
+		else
+			message = message .. "The global sales chest is either missing or invalid. Contact your server operator.\n"
+		end
+	end
+	
 	--If the player sales chest is valid and still exists then they get a custom message.
 	if pchest then
-		pchest.itemNum, pchest.sellableNum, pchest.evaluation = SellChestContents(pchest, true, pmerch)
+		pchest.itemNum, pchest.sellableNum, pchest.evaluation = SellChestContents(pchest, true, pmerch, ppers)
 		WorldInstance:Save() --Save the evaluations
-		message = ("Your current sales chest:\n" .. "Name: " .. pchest.refId .. "\nLocated in: " .. pchest.cell .. "\n" .. pchest.sellableNum .. "/" .. pchest.itemNum .. " of the items contained within can be sold for a total of " .. pchest.evaluation .. " gold.")
-		--TEMP
-		GetContainerInventory(pchest)
+		message = message .. ("Your current sales chest:\n" .. "Name: " .. pchest.refId .. "\nLocated in: " .. pchest.cell .. "\n" .. pchest.sellableNum .. "/" .. pchest.itemNum .. " of the items contained within can be sold for a total of " .. pchest.evaluation .. " gold.")
 	else
-		message = "You don't have a container"
+		message = message .. "You don't have a personal container"
 	end
 	tes3mp.CustomMessageBox(pid, config.guiId, message, 'Sell Items;Assign Container;Close')
 end
@@ -329,9 +395,13 @@ CheckChestExists = function(chest, pid)
 	then
 		return true
 	else
-		--Clear out the player's sales chest data
-		UnassignSalesChest(pid)
-		return false
+		if pid == nil then -- CheckChestExists was called to check if a global chest exists
+			return false
+		else
+			--Clear out the player's sales chest data
+			UnassignSalesChest(pid)
+			return false
+		end
 	end
 end
 
