@@ -1,4 +1,4 @@
--- salesChest - Release 2 - For tes3mp v0.6.1
+-- salesChest - Release 2.1 - For tes3mp v0.6.1
 
 --[[ INSTALLATION:
 1) Save this file as "salesChest.lua" in mp-stuff/scripts
@@ -8,9 +8,9 @@
 [	elseif cmd[1] == "saleschest" then
 		salesChest.OnSalesChestCommand(pid) ]
 
-4) Add the following to OnGUIAction in server.lua
+4) Add the following to OnContainer in server.lua
 	[ salesChest.OnContainer(pid, cellDescription) ]
-5) Add the following to OnContainer in server.lua
+5) Add the following to OnGUIAction in server.lua
 	[ if salesChest.OnGUIAction(pid, idGui, data) then return end ]
 6) Add the following beneath UpdateTime() in server.lua
 	[ salesChest.LoopHack() ]
