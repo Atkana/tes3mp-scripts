@@ -35,7 +35,7 @@ end
 ```
 
 ### Detecting If Item Was Spawned/Placed
-(Example lifted from cell's base.lua)
+(Example lifted from cell's base.lua. Only the wasPlacedHere bit is actually relevant for this example.)
 ```
 local wasPlacedHere = tableHelper.containsValue(LoadedCells[cell].data.packets.place, refIndex) or tableHelper.containsValue(LoadedCells[cell].data.packets.spawn, refIndex)
 
