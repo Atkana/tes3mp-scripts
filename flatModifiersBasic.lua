@@ -23,6 +23,7 @@ local function setIncreases(pid)
 		end
 	end
 	tes3mp.SendSkills(pid)
+	Players[pid]:SaveSkills()
 end
 
 Methods.OnPlayerLevel = function(pid)
