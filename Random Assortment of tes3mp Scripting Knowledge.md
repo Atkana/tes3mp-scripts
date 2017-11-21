@@ -4,6 +4,8 @@ Here's a random assortment of my acquired knowledge in regards to tes3mp scripti
 ### Gotcha - Getting The Character's Name
 When logging in as a character, the login dialog doesn't care about capitalization (for example, my character's login is "N'wah", but I could enter "n'WaH" and the game will still accept it). At this point, the game sets *the name that was entered* as the player's name for the purpose of getting the name via `tes3mp.GetName(pid)` or `Players[pid].name` and *not* the character's login name (retrieved via `Players[pid].data.login.name`). If you're storing any data using the player's name, you should make sure to use the player's *login name*, since the *player's name* (capitalization-wise) can vary by login.
 
+Alternatively you can circumvent this all by using myMod's `myMod.GetPlayerByName(targetName)` :P
+
 ### Gotcha - Detecting An Object
 If you're using Cell:ContainsObject(refIndex) to detect if an object exists in that cell, and that object is a data file object, then you also need to check that the object doesn't have a delete packet associated with it.
 So for example:
@@ -33,6 +35,74 @@ for arrayIndex, cell in pairs(temporaryLoadedCells) do
 	myMod.UnloadCell(cell)
 end
 ```
+### Adding Items to Players' Inventories (Online/Offline)
+The provided example is for adding/subtracting gold, though with a bit of adaption it could be used for any item
+```
+--Add gold to a player's inventory, regardless of whether or not they're online. Ideally, you'd use a different function to work out if they actually have the required amount of money in their inventory first if you're allowing them to purchase stuff
+local function addGold(playerName, amount) --playerName is the name of the player to add the gold to (capitalization doesn't matter). Amount is the amount of gold to add (can be negative if you want to subtract gold).
+	--Find the player
+	local player = myMod.GetPlayerByName(playerName)
+	
+	--Check we found the player before proceeding
+	if player then
+		--Look through their inventory to find where their gold is, if they have any
+		local goldLoc = inventoryHelper.getItemIndex(player.data.inventory, "gold_001", -1)
+		
+		--If they have gold in their inventory, edit that item's data. Otherwise make some new data.
+		if goldLoc then
+			player.data.inventory[goldLoc].count = player.data.inventory[goldLoc].count + amount
+			
+			--If the total is now 0 or lower, remove the entry from the player's inventory.
+			if player.data.inventory[goldLoc].count < 1 then
+				player.data.inventory[goldLoc] = nil
+			end
+		else
+			--Only create a new entry for gold if the amount is actually above 0, otherwise we'll have negative money.
+			if amount > 0 then
+				table.insert(player.data.inventory, {refId = "gold_001", count = amount, charge = -1})
+			end
+		end
+		
+		--How we save the character is different depending on whether or not the player is online
+		if player:IsLoggedIn() then
+			--If the player is logged in, we have to update their inventory to reflect the changes
+			player:Save()
+			player:LoadInventory()
+			player:LoadEquipment()
+		else
+			--If the player isn't logged in, we have to temporarily set the player's logged in variable to true, otherwise the Save function won't save the player's data
+			player.loggedIn = true
+			player:Save()
+			player.loggedIn = false
+		end
+		
+		return true
+	else
+		--Couldn't find any existing player with that name
+		return false
+	end
+end
+```
+And as a bounus, here's how to find out how much gold the player has. Ideally if you're using a script to sell something to the player, you'd use this to first check if the player actually has enough money to afford the item before proceeding:
+```
+--Returns the amount of gold the player has in their inventory, regardless of whether or not they're online. Returns 0 if they have none, or false if the player couldn't be found, otherwise returns the amount of gold they have.
+local function getPlayerGold(playerName) --playerName is the name of the player (capitalization doesn't matter)
+	local player = myMod.GetPlayerByName(playerName)
+	
+	if player then
+		local goldLoc = inventoryHelper.getItemIndex(player.data.inventory, "gold_001", -1)
+		
+		if goldLoc then
+			return player.data.inventory[goldLoc].count
+		else
+			return 0
+		end
+	else
+		--Couldn't find the player
+		return false
+	end
+end
+```
 
 ### Detecting If Item Was Spawned/Placed
 (Example lifted from cell's base.lua. Only the wasPlacedHere bit is actually relevant for this example.)
@@ -46,7 +116,7 @@ if wasPlacedHere == false then
 	LoadedCells[cell]:InitializeObjectData(refIndex, refId)
 end
 ```
-### Deleting Items
+### Deleting Objects
 Blah
 ```
 local splitIndex = refIndex:split("-")
@@ -56,8 +126,8 @@ for k, v in pairs(Players) do
 	tes3mp.SetEventCell(cell)
 	tes3mp.SetObjectRefNumIndex(splitIndex[1])
 	tes3mp.SetObjectMpNum(splitIndex[2])
-	tes3mp.AddWorldObject() -- Add actor to packet
-	tes3mp.SendObjectDelete() -- Send Delete
+	tes3mp.AddWorldObject()
+	tes3mp.SendObjectDelete()
 end
 ```
 This will only remove the object from the server. There are additional steps to remove it, depending on if the object is a data file object, or a spawned object (see: Detecting If Item Was Spawned/Placed).
@@ -125,7 +195,7 @@ i.e. You don't need to put that in when spawning a rat. The Lua scripts will fil
 
 ## Version 0.7\*
 ### Calling the functions of other scripts
-Quick example of how to format your script/mod/plugin/whatever the hell they're called in 0.7 (hence referred to as a scriptamajig):
+Quick example of how to format your script/mod/plugin/whatever the hell they're called in 0.7 (henceforth referred to as a scriptamajig):
 ```
 function GetValue()
 	-- Whatever
