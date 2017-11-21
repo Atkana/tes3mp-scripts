@@ -4,7 +4,7 @@ Here's a random assortment of my acquired knowledge in regards to tes3mp scripti
 ### Gotcha - Getting The Character's Name
 When logging in as a character, the login dialog doesn't care about capitalization (for example, my character's login is "N'wah", but I could enter "n'WaH" and the game will still accept it). At this point, the game sets *the name that was entered* as the player's name for the purpose of getting the name via `tes3mp.GetName(pid)` or `Players[pid].name` and *not* the character's login name (retrieved via `Players[pid].data.login.name`). If you're storing any data using the player's name, you should make sure to use the player's *login name*, since the *player's name* (capitalization-wise) can vary by login.
 
-Alternatively you can circumvent this all by using myMod's `myMod.GetPlayerByName(targetName)` :P
+Alternatively you can circumvent most of this by using myMod's `myMod.GetPlayerByName(targetName)` :P
 
 ### Gotcha - Detecting An Object
 If you're using Cell:ContainsObject(refIndex) to detect if an object exists in that cell, and that object is a data file object, then you also need to check that the object doesn't have a delete packet associated with it.
