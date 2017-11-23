@@ -1,4 +1,4 @@
--- kanaHousing - Release 1 - For tes3mp 0.6.1
+-- kanaHousing - Release 1.1 - For tes3mp 0.6.1
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in mp-stuff/scripts
@@ -270,7 +270,7 @@ local function removeCellFromHouse(cell, houseName)
 	end
 end
 
---furnReturn = "return"/"remove"/"leave"/"sell". "return" - remove and add back to inventory. "sell" remove and add resale value to player. "remove" - delete them all. "leave"? [?] - Furniture just stays where it is, still owned. [?] - Furniture stays where it is, owned by all/somebody in particular.
+--furnReturn = "return" - remove furniture and add back to furniture inventory. "sell" remove and add resale value to player. "remove" - delete them all.
 local function removeHouseOwner(houseName, refund, furnReturn)
 	local oname = getHouseOwnerName(houseName)
 	local hdata = housingData.houses[houseName]
@@ -958,12 +958,12 @@ end
 local function onHouseEditOwnerPrompt(pid, data)
 	if data == nil or data == "" or string.lower(data) == "none" then
 		--Do nothing
-		removeHouseOwner(adminSelectedHouse[getName(pid)])
+		removeHouseOwner(adminSelectedHouse[getName(pid)], true, "return")
 	else
 		if string.lower(data) == getHouseOwnerName(adminSelectedHouse[getName(pid)]) then
 			--Player already owns this house... do nothing
 		else
-			removeHouseOwner(adminSelectedHouse[getName(pid)])
+			removeHouseOwner(adminSelectedHouse[getName(pid)], true, "return")
 			addHouseOwner(data, adminSelectedHouse[getName(pid)])
 		end
 	end
