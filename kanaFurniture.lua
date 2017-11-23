@@ -1,8 +1,8 @@
--- kanaFurniture - Release 1 - For tes3mp v0.6.1
+-- kanaFurniture - Release 2 - For tes3mp v0.6.1
 -- REQUIRES: decorateHelp (https://github.com/Atkana/tes3mp-scripts/blob/master/decorateHelp.lua)
 -- Purchase and place an assortment of furniture
 
--- NOTE FOR SCRIPTS: pname requires login name (https://github.com/Atkana/tes3mp-scripts/blob/master/Random%20Assortment%20of%20tes3mp%20Scripting%20Knowledge.md#gotcha---getting-the-characters-name)
+-- NOTE FOR SCRIPTS: pname requires the name to be in all LOWERCASE
 
 --[[ INSTALLATION:
 1) Save this file as "kanaFurniture.lua" in mp-stuff/scripts
@@ -365,6 +365,38 @@ Methods.OnServerPostInit = function()
 		WorldInstance.data.customVariables.kanaFurniture.inventories = {}
 		WorldInstance:Save()
 	end
+	
+	--Slight Hack for updating pnames to their new values. In release 1, the script stored player names as their login names, in release 2 it stores them as their all lowercase names.
+	local placed = getPlacedTable()
+	for cell, v in pairs(placed) do
+		for refIndex, v in pairs(placed[cell]) do
+			placed[cell][refIndex].owner = string.lower(placed[cell][refIndex].owner)
+		end
+	end
+	local permissions = getPermissionsTable()
+		
+	for cell, v in pairs(permissions) do
+		local newNames = {}
+		
+		for pname, v in pairs(permissions[cell]) do
+			table.insert(newNames, string.lower(pname))
+		end
+		
+		permissions[cell] = {}
+		for k, newName in pairs(newNames) do
+			permissions[cell][newName] = true
+		end
+	end
+	
+	local inventories = getFurnitureInventoryTable()
+	local newInventories = {}
+	for pname, invData in pairs(inventories) do
+		newInventories[string.lower(pname)] = invData
+	end
+	
+	WorldInstance.data.customVariables.kanaFurniture.inventories = newInventories
+	
+	WorldInstance:Save()
 end
 
 -------------------------
@@ -374,7 +406,9 @@ local function getSellValue(baseValue)
 end
 
 local function getName(pid)
-	return Players[pid].data.login.name
+	--return Players[pid].data.login.name
+	--Release 2 change: Now uses all lowercase name for storage
+	return string.lower(Players[pid].accountName)
 end
 
 local function getObject(refIndex, cell)
@@ -393,7 +427,6 @@ local function getObject(refIndex, cell)
 		return false
 	end	
 end
-
 
 --Returns the amount of gold in a player's inventory
 local function getPlayerGold(pid)
@@ -692,6 +725,19 @@ Methods.TransferAllOwnership = function(cell, playerCurrentName, playerToName, s
 	if playerCurrentName and myMod.IsPlayerNameLoggedIn(playerCurrentName) then
 		decorateHelp.SetSelectedObject(myMod.GetPlayerByName(playerCurrentName).pid, "")
 	end
+end
+
+--New Release 2 Methods:
+Methods.GetSellBackPrice = function(value)
+	return getSellValue(value)
+end
+
+Methods.GetFurnitureDataByRefId = function(refId)
+	return getFurnitureData(refId)
+end
+
+Methods.GetPlacedInCell = function(cell)
+	return getPlaced(cell)
 end
 
 
