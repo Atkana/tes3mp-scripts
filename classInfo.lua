@@ -21,7 +21,7 @@ classList["lowercasename"] = {
 }
 ]]
 
-Methods = {}
+local Methods = {}
 
 local classList = {}
 
