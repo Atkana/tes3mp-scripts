@@ -1,4 +1,4 @@
--- flatModifiers (Advanced) - Release 1 - For tes3mp v0.6.1. Requires classInfo.
+-- flatModifiers (Advanced) - Release 1.1 - For tes3mp v0.6.1. Requires classInfo.
 
 --[[ INSTALLATION
 1) Save this file as "flatModifiers.lua" in mp-stuff/scripts
@@ -14,7 +14,7 @@ The values this script use are for fake level ups towards attributes, rather tha
 	1-4 gives 2x, 5-7 gives 3x, 8-9 gives 4x, 10+ gives 5x
 ]]
 
-Methods = {}
+local Methods = {}
 
 classInfo = require("classInfo")
 
