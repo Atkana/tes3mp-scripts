@@ -1,4 +1,4 @@
--- kanaHousing - Release 1.1 - For tes3mp 0.6.1
+-- kanaHousing - Release 1.2 - For tes3mp 0.6.1
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in mp-stuff/scripts
@@ -59,7 +59,7 @@ color = require("color")
 local serverConfig = require("config")
 actionTypes = require("actionTypes")
 
-Methods = {}
+local Methods = {}
 --Forward Declarations:
 local showAdminMain, showHouseCreate, showAdminHouseSelect, showCellEditMain, showHouseEditMain, showHouseEditPricePrompt, showHouseEditOwnerPrompt, showHouseInfo, showUserMain, showAllHousesList, showPlayerSettingsMain, showPlayerSettingsOwnedList, showPlayerSettingsAddPrompt, showPlayerSettingsRemoveList, showPlayerSellOptions, onLockStatusChange
 -------------------
