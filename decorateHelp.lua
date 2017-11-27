@@ -1,4 +1,4 @@
--- decorateHelp - Release 1 - For tes3mp v0.6.1
+-- decorateHelp - Release 1.1 - For tes3mp v0.6.1
 -- Alter positions of items using a GUI
 
 --[[ INSTALLATION:
@@ -24,7 +24,7 @@ config.MainId = 31360
 config.PromptId = 31361
 ------
 
-Methods = {}
+local Methods = {}
 
 tableHelper = require("tableHelper")
 
