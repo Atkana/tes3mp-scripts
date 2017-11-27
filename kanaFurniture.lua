@@ -1,4 +1,4 @@
--- kanaFurniture - Release 2 - For tes3mp v0.6.1
+-- kanaFurniture - Release 2.1 - For tes3mp v0.6.1
 -- REQUIRES: decorateHelp (https://github.com/Atkana/tes3mp-scripts/blob/master/decorateHelp.lua)
 -- Purchase and place an assortment of furniture
 
@@ -277,7 +277,7 @@ decorateHelp = require("decorateHelp")
 tableHelper = require("tableHelper")
 myMod = require("myMod")
 
-Methods = {}
+local Methods = {}
 --Forward declarations:
 local showMainGUI, showBuyGUI, showInventoryGUI, showViewGUI, showInventoryOptionsGUI, showViewOptionsGUI
 ------------
