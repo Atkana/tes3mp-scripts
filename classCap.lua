@@ -9,7 +9,7 @@
 	[ classCap.OnPlayerSkill(pid) ]
 ]]
 
-Methods = {}
+local Methods = {}
 
 classInfo = require("classInfo")
 
