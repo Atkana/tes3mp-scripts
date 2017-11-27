@@ -1,7 +1,7 @@
---bannedEquipment - Release 2 - For tes3mp v0.6.1
+--bannedEquipment - Release 2.1 - For tes3mp v0.6.1
 --Disallow select items from being equipped by players.
 
-Methods = {}
+local Methods = {}
 
 --[[ INSTALLATION
 1) Save as bannedEquipment.lua in the scripts folder

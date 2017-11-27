@@ -1,4 +1,4 @@
--- salesChest - Release 2.1 - For tes3mp v0.6.1
+-- salesChest - Release 2.2 - For tes3mp v0.6.1
 
 --[[ INSTALLATION:
 1) Save this file as "salesChest.lua" in mp-stuff/scripts
@@ -48,7 +48,7 @@ config.tacPersIncrease = 0 --The percent bonus added for each point of personali
 config.advTraderSkill = 50 --The effective mercantile skill that the fake trader has
 config.advPersonalityMod = 1 --% to modify personality by when using it to calculate the disposition with the fake trader
 
-Methods = {}
+local Methods = {}
 
 require("time")
 itemInfo = require("itemInfo")

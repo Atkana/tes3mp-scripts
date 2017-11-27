@@ -1,4 +1,4 @@
-Methods = {}
+local Methods = {}
 
 --[[ INSTALLATION:
 1) Save this file as "markRecall.lua" in mp-stuff/scripts

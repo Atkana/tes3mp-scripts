@@ -1,7 +1,7 @@
--- itemInfo - Release 1 - For tes3mp v0.6.1
+-- itemInfo - Release 1.1 - For tes3mp v0.6.1
 -- save as itemInfo.lua in the scripts folder
 
-Methods = {}
+local Methods = {}
 
 tableHelper = require("tableHelper")
 
