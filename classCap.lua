@@ -1,4 +1,4 @@
--- classCap - Release 1 - For tes3mp v0.6.1. Requires classInfo
+-- classCap - Release 1.1 - For tes3mp v0.6.1. Requires classInfo
 -- Caps Major, Minor, and Misc skills to certain amounts based on class. 
 -- Not fully tested
 
