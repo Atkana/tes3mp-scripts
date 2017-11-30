@@ -103,6 +103,55 @@ local function getPlayerGold(playerName) --playerName is the name of the player 
 	end
 end
 ```
+Hey lookie here! As a bonus bonus, here's an example of the original item adding script but adapted to work for any item, instead of just gold:
+```
+local function addItem(playerName, refId, amount, charge) --playerName is the name of the player to add the item to (capitalization doesn't matter). refId is the refId of the item. amount is the amount of item to add (can be negative if you want to subtract items). charge is optional, denoting the item's charge.
+	--Set the charge to default, if not provided
+	local charge = charge or -1
+	
+	--Find the player
+	local player = myMod.GetPlayerByName(playerName)
+	
+	--Check we found the player before proceeding
+	if player then
+		--Look through their inventory to find where an existing instance of the item is, if they have any
+		local itemLoc = inventoryHelper.getItemIndex(player.data.inventory, refId, charge)
+		
+		--If they have the item in their inventory (with a matching charge), edit that item's data. Otherwise make some new data.
+		if itemLoc then
+			player.data.inventory[itemLoc].count = player.data.inventory[itemLoc].count + amount
+			
+			--If the total is now 0 or lower, remove the entry from the player's inventory.
+			if player.data.inventory[itemLoc].count < 1 then
+				player.data.inventory[itemLoc] = nil
+			end
+		else
+			--Only create a new entry for the item if the amount is actually above 0, otherwise we'll have negative items.
+			if amount > 0 then
+				table.insert(player.data.inventory, {refId = refId, count = amount, charge = charge})
+			end
+		end
+		
+		--How we save the character is different depending on whether or not the player is online
+		if player:IsLoggedIn() then
+			--If the player is logged in, we have to update their inventory to reflect the changes
+			player:Save()
+			player:LoadInventory()
+			player:LoadEquipment()
+		else
+			--If the player isn't logged in, we have to temporarily set the player's logged in variable to true, otherwise the Save function won't save the player's data
+			player.loggedIn = true
+			player:Save()
+			player.loggedIn = false
+		end
+		
+		return true
+	else
+		--Couldn't find any existing player with that name
+		return false
+	end
+end
+```
 
 ### Detecting If Item Was Spawned/Placed
 (Example lifted from cell's base.lua. Only the wasPlacedHere bit is actually relevant for this example.)
