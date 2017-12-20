@@ -1,4 +1,4 @@
--- kanaHousing - Release 1.2 - For tes3mp 0.6.1
+-- kanaHousing - Release 1.3 - For tes3mp 0.6.1
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in mp-stuff/scripts
@@ -227,7 +227,7 @@ end
 
 local function setHousePrice(houseName, price)
 	if housingData.houses[houseName] then
-		housingData.houses[houseName].price = price
+		housingData.houses[houseName].price = tonumber(price) or config.defaultPrice --If the price somehow isn't a valid number, use the default price
 		Save()
 	end
 end
