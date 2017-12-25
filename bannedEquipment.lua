@@ -5,7 +5,8 @@ local Methods = {}
 
 --[[ INSTALLATION
 1) Save as bannedEquipment.lua in the scripts folder
-2) Add the following line to OnPlayerEquipment in server.lua
+2) Add [ bannedEquipment = require("bannedEquipment") ] to the top of server.lua
+3) Add the following line to OnPlayerEquipment in server.lua
 	[ bannedEquipment.OnPlayerEquipment(pid) ]
 ]]
 color = require("color")
