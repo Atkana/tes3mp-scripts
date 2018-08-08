@@ -1,4 +1,4 @@
--- kanaHousing - Release 1.3 - For tes3mp 0.6.1
+-- kanaHousing - Release 1.4 - For tes3mp 0.6.1
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in mp-stuff/scripts
