@@ -1423,7 +1423,7 @@ Methods.OnPlayerCellChange = function(pid)
 		
 		--If they're entering a house cell
 		if housingData.cells[currentCell] and housingData.cells[currentCell].house ~= nil then
-			hdata = housingData.houses[housingData.cells[currentCell].house]
+			local hdata = housingData.houses[housingData.cells[currentCell].house]
 			
 			local canEnter, enterReason = isAllowedEnter(pid, currentCell)
 			if enterReason == "unowned" then --A player has entered a house without an owner
