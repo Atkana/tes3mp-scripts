@@ -1,4 +1,4 @@
--- kanaHousing - Release 1.4 - For tes3mp 0.6.1
+-- kanaHousing - Release 1.5 - For tes3mp 0.6.1
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in mp-stuff/scripts
@@ -1415,7 +1415,7 @@ end
 
 local lastEnteredHouse = {}
 Methods.OnPlayerCellChange = function(pid)
-	if Players[pid]:IsLoggedIn() then
+	if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
 		local currentCell = tes3mp.GetCell(pid)
 		
 		--Do the locked doors check stuff
@@ -1505,7 +1505,7 @@ Methods.OnContainer = function(pid, cellDescription)
 	doLog("DEBUG: Container stuff got action")
 	local pname
 	
-	if Players[pid]:IsLoggedIn() then
+	if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
 		pname = Players[pid].name
 	else
 		return
@@ -1575,7 +1575,7 @@ Methods.OnObjectDelete = function (pid, cellDescription)
 	tes3mp.ReadLastEvent()
 	local pname
 	
-	if Players[pid]:IsLoggedIn() then
+	if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
 		pname = Players[pid].name
 	else
 		return
