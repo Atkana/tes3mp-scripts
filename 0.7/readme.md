@@ -1,8 +1,7 @@
 # 0.7 tes3mp-scripts
-Collection of all my scripts for tes3mp 0.7 (or, at least, 0.7-prerelease)
+Collection of all my scripts for tes3mp 0.7 (or, at least, 0.7-prerelease). The information for some scripts can be found here, however larger ones may have their own separate readme in their own folder. Unless otherwise stated, you can find installation instructions at the top of each file.
 
 ## Scripts
-The information for some scripts can be found here, however larger ones may have their own separate readme in their own folder. Unless otherwise stated, you can find installation instructions at the top of each file.
 ### flatModifiers
 Change the way that the attribute advancement modifiers on level up are calculated. It can be configured to give a flat bonus to all players, or a tailored bonus based on their class. Requires *classInfo*. (Note: Depending on the hotfix level of your version of 0.7-prerelease, the lines `tes3mp.SendSkills(pid)` may not be necessary)
 #### Configuration
