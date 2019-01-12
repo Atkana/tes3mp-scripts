@@ -1,5 +1,5 @@
 # tes3mp-scripts
-Collection of all my scripts for tes3mp
+Collection of all my scripts for tes3mp. **Important note:** Many of these scripts are for v0.6, and only exist here so that links don't break. For scripts created for versions beyond v0.6, look in the appropriately named folders.
 ## Scripts
 ### flatModifiers
 [Steam Disucssion](http://steamcommunity.com/groups/mwmulti/discussions/0/3182216552768549150/) - Change the way that the attribute advancement modifiers on level up are calculated.
