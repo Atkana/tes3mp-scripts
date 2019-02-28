@@ -16,6 +16,8 @@ The way `InputDialog`s work (the thing that pops up and asks you to enter some t
 * For each instance, add `,""` directly before the closing bracket (the `)`). For example, if the line was originally `tes3mp.InputDialog(pid, guiId, message)`, it'll become `tes3mp.InputDialog(pid, guiId, message,"")`
 
 For scripters: The new - fourth - argument is a string that'll be displayed beneath the text input area - like how the warning about server owners being able to read your passwords appears when you make a new account (I believe). If you don't want anything displayed, passing an empty string should suffice.
+### os.getenv("MOD_DIR") becomes tes3mp.GetModDir()
+Regarding [this commit](https://github.com/TES3MP/CoreScripts/commit/c43f42b7d35f026e1f9b5e91a742d84f1b0d23cd) you have to change os.getenv("MOD_DIR") to tes3mp.GetModDir(). This is most common in places where jsonInterface is loading files and needs a path to your /data/ folder.
 ### myMod has split into logicHandler and eventHandler
 Previously, `myMod` was responsible for some logic-based stuff, as well as processing events. Now, the logic-based stuff is in `logicHandler.lua` and the event processing stuff is in `eventHandler.lua`. There probably aren't many scripts that were originally using myMod's event-processing functions themselves, beyond perhaps requiring alterations to them as part of installing the script. If a script *does* require edits to any of those parts, you can try making those edits to `eventHandler.lua`. Be aware that the instructions that the script gives are most likely to be explicitly for the version the script was written for, and doing those same edits for this version might break things.  
 
