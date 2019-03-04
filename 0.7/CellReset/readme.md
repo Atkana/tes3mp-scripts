@@ -42,7 +42,7 @@ elseif cmd[1] == "forcereset" then
 ```
 
 ## Script Methods
-There are a number of functions made available for other scripts to utilise. See the file for mor information on what each of them do.
+There are a number of functions made available for other scripts to utilise. See the file for more information on what each of them do.
 
 ## Known Issues/Limitations
 I've done my best to make sure that everything works as it should, but problems can get past testing. If you run into any problems while running it, please do get in touch and I'll try my best to fix it.
