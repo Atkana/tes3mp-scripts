@@ -1,4 +1,4 @@
--- kanaBank - Release 1 - For tes3mp 0.7-prerelease
+-- kanaBank - Release 2 - For tes3mp 0.7-prerelease
 -- Implements a banking system for players to utilise
 
 --[[ INSTALLATION
@@ -15,8 +15,7 @@ a) Find the section:
 	[ else
 		local message = "Not a valid command. Type /help for more info.\n" ]
 	Add the following ABOVE it:
-	[ elseif cmd[1] == "bank" then
-		kanaBank.OnBankCommand(pid, cmd) ]
+	[ elseif cmd[1] == "bank" then kanaBank.OnBankCommand(pid, cmd) ]
 
 = IN EVENTHANDLER.LUA =
 a) Find the function eventHandler.OnObjectActivate. Inside, find the line [ tes3mp.LogAppend(enumerations.log.INFO, debugMessage) ]. Add the following BENEATH it:
@@ -279,6 +278,32 @@ Methods.CreateContainerForPlayer = function(playerName)
 	return uniqueIndex
 end
 
+-- Use to load the data of all custom records contained in a provided inventory
+Methods.LoadInventoryGeneratedRecords = function(pid, inventory)
+	local storeTypes = {}
+	
+	for index, item in ipairs(inventory) do
+		if logicHandler.IsGeneratedRecord(item.refId) then
+			local recordType = string.match(item.refId, "_(%a+)_")
+			
+			if not storeTypes[recordType] then storeTypes[recordType] = {} end
+			
+			table.insert(storeTypes[recordType], item.refId)
+		end
+	end
+	
+	-- If there were items found, load them from each relevant store
+	if not tableHelper.isEmpty(storeTypes) then
+		for storeType, refIdList in pairs(storeTypes) do
+			local recordStore = RecordStores[storeType]
+
+			if recordStore ~= nil then
+				recordStore:LoadGeneratedRecords(pid, recordStore.data.generatedRecords, refIdList)
+			end
+		end
+	end
+end
+
 Methods.OpenNamedPlayersContainerForPid = function(pid, targetPlayerName)
 	local playerName = getName(pid)
 	
@@ -312,6 +337,9 @@ Methods.OpenNamedPlayersContainerForPid = function(pid, targetPlayerName)
 		LoadedCells[scriptConfig.storageCell]:LoadObjectsPlaced(pid, oData, {targetUniqueIndex})
 	end
 	
+	-- Ensure player has all generated records associated with the inventory
+	Methods.LoadInventoryGeneratedRecords(pid, oData[targetUniqueIndex].inventory)
+	-- Load container info
 	LoadedCells[scriptConfig.storageCell]:LoadContainers(pid, oData, {targetUniqueIndex})
 	
 	-- Activate the container to open up its contents!
