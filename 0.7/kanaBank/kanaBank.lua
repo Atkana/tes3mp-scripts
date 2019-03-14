@@ -29,7 +29,7 @@ local scriptConfig = {}
 
 scriptConfig.useBankerRank = 0 -- The staffRank required to use a bank via bankers
 scriptConfig.useBankCommandRank = 0 -- The staffRank required to use the /bank command
-scriptConfig.openOtherPlayersBankRank = 0 -- The staffRank required to use the /bank playername command
+scriptConfig.openOtherPlayersBankRank = 1 -- The staffRank required to use the /bank playername command
 
 -- Any object that's identified as a "banker" will open a player's bank on activation
 -- Provided the player meets the useBankerRank requirement. This /should/ override the default activation
