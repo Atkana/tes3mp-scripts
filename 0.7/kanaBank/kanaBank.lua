@@ -46,7 +46,7 @@ scriptConfig.baseObjectRecordType = "creature"
 scriptConfig.storageCell = "Clutter Warehouse - Everything Must Go!" -- The cell that will contain all the player's bank containers. Use a cell that can't be visited (like a debug cell). If running a cell resetting script, ensure the provided cell is exempt from resetting (if using Atkana's CellReset, this'll automatically be registered)!
 
 scriptConfig.logging = true
-scriptConfig.debug = true
+scriptConfig.debug = false
 
 scriptConfig.recordRefId = "kanabankcontainer" -- Used internally for this script's base permanent record id. There should be no reason you'd need to change it
 
