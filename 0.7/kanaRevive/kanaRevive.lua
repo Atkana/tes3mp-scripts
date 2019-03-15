@@ -1,4 +1,4 @@
--- kanaRevive - Release 1 - For tes3mp 0.7-prerelease
+-- kanaRevive - Release 2 - For tes3mp 0.7-prerelease
 -- Players enter a downed state before dying. Other players can activate them to revive them!
 
 --[[ INSTALLATION
@@ -152,7 +152,7 @@ Methods.OnPlayerRevive = function(downedPid, reviverPid)
 	elseif scriptConfig.revivedFatigueMode == "preserve" then
 		newFatigue = fatigueCurrent
 	else -- Percent
-		newMagicka = math.floor((fatigueBase * scriptConfig.percentModeFatigue) + 0.5 )
+		newFatigue = math.floor((fatigueBase * scriptConfig.percentModeFatigue) + 0.5 )
 	end
 	
 	-- Now we'll clamp these values before we move on
