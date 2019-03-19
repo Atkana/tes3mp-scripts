@@ -74,3 +74,4 @@ tes3mp.StartTimer(self.resurrectTimerId)
 A script like this is awkward to test on my own, so there is the possibility that bugs might've slipped through my testing. Contact me if you find anything!
 - Not an issue per se, but worthy of mention: Reviving a player is instant. I could've added some time delay faff, but I preferred not to :P. It's possible that I *could* change that in the future if there was enough demand for it.
 - Sometimes, if another player is downed in a different cell, it's possible that when you enter the cell, you won't be able to see the player's body. If `useMarkers` is enabled, then a special activatable object will be spawned alongside their body - you can activate either the special object or the player to revive them.
+- It's possible that through niche circumstances, a revive marker might remain even when not linked to a player. Simply using the marker will clear it away harmlessly.
