@@ -31,6 +31,12 @@ The value that each of a player's main stats (health, magicka, and fatigue) are 
 - `"percent"` - The stat is set to be a percent of the player's maximum value for that stat. What percent modifier is used is governed by the configuration options `percentModeHealth`, `percentModeMagicka`, and `percentModeFatigue`. Note that the values used are multipliers - `0.1` represents 10%, `1` represents 100%
 
 *(Note that the script will automatically ensure that the stat values are clamped within the stat's normal bounds, and that the value used for health will, at minimum, be 1).*
+### Revive Marker Options
+To overcome some current problems, a special activatable object can also be made spawned for any player who wasn't in the cell when the player was downed.
+- `useMarkers` - If set to `true`, then a special marker object will also be spawned when a player is downed. Anyone who activates either the object or the downed player will revive them.
+- `markerModel` - The model to use as the revive marker. By default, it's a spoopy skellington.
+- `baseObjectType` - The record type of the revive marker. Honestly won't ever need changing from its default value of `"miscellaneous"`
+- `recordRefId` - The ID used for the revive marker's permanent record. Won't need changing.
 
 ### Language Support
 Almost every piece of text that's presented to the player can easily be changed by configuring the `lang` section. Keep the keys as they are, and edit their strings to read anything you want. Note that words beginning with `%` are special wildcards (? I think that's the term) and shouldn't be translated (i.e. `%name` should stay as `%name`) - the script will automatically replace any instance of them with special text.
@@ -43,6 +49,8 @@ For example: `revivedReceiveMessage` determines the message that a player receiv
 ### Edits to `serverCore.lua`
 - Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaRevive = require("kanaRevive")```
 - Find the line `eventHandler.OnObjectActivate(pid, cellDescription)`. Add the following *beneath* it: ```kanaRevive.OnObjectActivate(pid, cellDescription)```
+- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```kanaRevive.OnServerPostInit()```
+- Find the line `function OnPlayerDisconnect(pid)`. Add the following *beneath* it: ```kanaRevive.OnPlayerDisconnect(pid)```
 ### Edits to `eventHandler.lua`
 - Find the line `Players[pid]:Message("You have successfully logged in.\n" .. config.chatWindowInstructions)`. Add the following *beneath* it: ```kanaRevive.OnPlayerLogin(pid)```
 ### Edits to `commandHandler.lua`
@@ -65,3 +73,4 @@ tes3mp.StartTimer(self.resurrectTimerId)
 ## Known Issues
 A script like this is awkward to test on my own, so there is the possibility that bugs might've slipped through my testing. Contact me if you find anything!
 - Not an issue per se, but worthy of mention: Reviving a player is instant. I could've added some time delay faff, but I preferred not to :P. It's possible that I *could* change that in the future if there was enough demand for it.
+- Sometimes, if another player is downed in a different cell, it's possible that when you enter the cell, you won't be able to see the player's body. If `useMarkers` is enabled, then a special activatable object will be spawned alongside their body - you can activate either the special object or the player to revive them.
