@@ -1,4 +1,4 @@
--- kanaRevive - Release 2 - For tes3mp 0.7-prerelease
+-- kanaRevive - Release 3 - For tes3mp 0.7-prerelease
 -- Players enter a downed state before dying. Other players can activate them to revive them!
 
 --[[ INSTALLATION
@@ -10,6 +10,10 @@ a) Find the line [ menuHelper = require("menuHelper") ]. Add the following BENEA
 	[ kanaRevive = require("kanaRevive") ]
 b) Find the line [ eventHandler.OnObjectActivate(pid, cellDescription) ]. Add the following BENEATH it:
 	[ kanaRevive.OnObjectActivate(pid, cellDescription) ]
+c) Find the line [ function OnServerPostInit() ]. Add the following BENEATH it:
+	[ kanaRevive.OnServerPostInit() ]
+d) Find the line [ function OnPlayerDisconnect(pid) ]. Add the following BENEATH it:
+	[ kanaRevive.OnPlayerDisconnect(pid) ]
 
 = IN EVENTHANDLER.LUA =
 a) Find the line [ Players[pid]:Message("You have successfully logged in.\n" .. config.chatWindowInstructions) ] . Add the following BENEATH it:
@@ -61,6 +65,14 @@ scriptConfig.percentModeHealth = 0.1
 scriptConfig.percentModeMagicka = 0.1
 scriptConfig.percentModeFatigue = 0.1
 
+-- The following are for the custom player markers
+-- Currently, if a player is downed in a separate cell, players entering the cell won't see the corpse
+-- Using this option, a marker will be created that players can activate instead.
+scriptConfig.useMarkers = true
+scriptConfig.markerModel = "o/contain_corpse20.nif"
+scriptConfig.baseObjectType = "miscellaneous"
+scriptConfig.recordRefId = "kanarevivemarker"
+
 
 local lang = {
 	["awaitingReviveMessage"] = "You are awaiting revival.",
@@ -72,6 +84,8 @@ local lang = {
 	["revivedOtherMessage"] = "%receive has been revived by %give.",
 	["bleedoutPlayerMessage"] = "You have died.",
 	["bleedoutOtherMessage"] = "%name has bled out.",
+	
+	["reviveMarkerName"] = "Player corpse - Use to revive!",
 }
 
 ---------------------------------------------------------------------------------------
@@ -93,6 +107,78 @@ Methods.GetLangText = function(key, data)
 end
 
 ---------------------------------------------------------------------------------------
+local reviveMarkers = {}
+local pidMarkerLookup = {}
+
+Methods.CreateReviveMarker = function(pid)
+	local playerName = Players[pid].name
+	local cellDescription = Players[pid].data.location.cell
+	local location = {
+		posX = tes3mp.GetPosX(pid),
+		posY = tes3mp.GetPosY(pid),
+		posZ = tes3mp.GetPosZ(pid) + 10,
+		rotX = 0,
+		rotY = 0,
+		rotZ = tes3mp.GetRotZ(pid)
+	}
+	
+	-- Create the marker
+	local useTemporaryLoad = false
+	if LoadedCells[cellDescription] == nil then
+		logicHandler.LoadCell(cellDescription)
+		useTemporaryLoad = true
+	end
+	
+	local uniqueIndex = logicHandler.CreateObjectAtLocation(cellDescription, location, scriptConfig.recordRefId, "place")
+	
+	if useTemporaryLoad then
+		logicHandler.UnloadCell(cellDescription)
+	end
+	
+	reviveMarkers[uniqueIndex] = {playerName = Players[pid].name, cellDescription = cellDescription, pid = pid}
+	pidMarkerLookup[pid] = uniqueIndex
+	
+	-- Delete the marker for the downed player, and anyone who was in the cell
+	for pid, player in pairs(Players) do
+		if tes3mp.GetCell(pid) == cellDescription then
+			logicHandler.DeleteObjectForPlayer(pid, cellDescription, uniqueIndex)
+		end
+	end
+end
+
+Methods.RemoveReviveMarker = function(uniqueIndex, cellDescriptionGiven)
+	if uniqueIndex then
+		local useTemporaryLoad = false
+		
+		local cellDescription
+		-- The OnObjectActivate call for this function provides a cell description in case the revive marker is from an old session
+		-- Use that if provided, otherwise it's safe to get it from looking up its information
+		if not cellDescriptionGiven then
+			cellDescription = reviveMarkers[uniqueIndex].cellDescription
+		else
+			cellDescription = cellDescriptionGiven
+		end
+		
+		if LoadedCells[cellDescription] == nil then
+			logicHandler.LoadCell(cellDescription)
+			useTemporaryLoad = true
+		end
+		
+		logicHandler.DeleteObjectForEveryone(cellDescription, uniqueIndex)
+		LoadedCells[cellDescription]:DeleteObjectData(uniqueIndex)
+		
+		if useTemporaryLoad then
+			logicHandler.UnloadCell(cellDescription)
+		end
+		
+		if reviveMarkers[uniqueIndex] then
+			pidMarkerLookup[reviveMarkers[uniqueIndex].pid] = nil
+		end
+		
+		reviveMarkers[uniqueIndex] = nil
+	end
+end
+
 Methods.SendMessageToAllWithCellLoaded = function(cellDescription, message, exceptionPids)
 	for pid, player in pairs(Players) do
 		if tableHelper.containsValue(player.cellsLoaded, cellDescription) and not tableHelper.containsValue(exceptionPids or {}, pid) then
@@ -191,6 +277,11 @@ Methods.OnPlayerRevive = function(downedPid, reviverPid)
 	tes3mp.SetFatigueCurrent(downedPid, newFatigue)
 	
 	tes3mp.SendStatsDynamic(downedPid)
+	
+	-- Cleanup the player's revive marker, if created
+	if scriptConfig.useMarkers then
+		Methods.RemoveReviveMarker(pidMarkerLookup[downedPid])
+	end
 end
 
 Methods.OnBleedoutExpire = function(pid)
@@ -216,6 +307,11 @@ Methods.OnBleedoutExpire = function(pid)
 		-- While we could just jump straight to using Resurrect, we'll faff through the proper channels...
 		-- Note: Might have to instead start the regular dying timer, just to be safe
 		OnDeathTimeExpiration(pid)
+	end
+	
+	-- Cleanup the player's revive marker, if created
+	if scriptConfig.useMarkers then
+		Methods.RemoveReviveMarker(pidMarkerLookup[pid])
 	end
 end
 
@@ -259,6 +355,11 @@ Methods.SetPlayerDowned = function(pid, timeRemaining)
 		tes3mp.StartTimer(timerId)
 	end
 	
+	-- Create a marker, if configured
+	if scriptConfig.useMarkers then
+		Methods.CreateReviveMarker(pid)
+	end
+	
 	-- Tell the player the command prompt to die
 	tes3mp.SendMessage(pid, Methods.GetLangText("giveInPrompt") .. "\n")
 end
@@ -297,10 +398,15 @@ Methods.OnObjectActivate = function(pid, cellDescription)
 			for index = 0, tes3mp.GetObjectListSize() - 1 do
 				local objectPid
 				local activatorPid
+				local objectUniqueIndex
+				local objectRefId
 				
 				-- Detect if the object being activated is a player
 				if tes3mp.IsObjectPlayer(index) then
 					objectPid = tes3mp.GetObjectPid(index)
+				else
+					objectUniqueIndex = tes3mp.GetObjectRefNum(index) .. "-" .. tes3mp.GetObjectMpNum(index)
+					objectRefId = tes3mp.GetObjectRefId(index)
 				end
 				
 				-- Detect if the object was activated by a player
@@ -315,9 +421,36 @@ Methods.OnObjectActivate = function(pid, cellDescription)
 						-- Revive them!
 						Methods.OnPlayerRevive(objectPid, activatorPid)
 					end
+				elseif objectRefId == scriptConfig.recordRefId then
+					-- The player activated a revive marker!
+					if reviveMarkers[objectUniqueIndex] and Methods.IsPlayerDowned(reviveMarkers[objectUniqueIndex].pid) then
+						Methods.OnPlayerRevive(reviveMarkers[objectUniqueIndex].pid, activatorPid)
+					end
+					
+					-- It's possible that markers might be left over from previous sessions, so we'll always make sure to delete one that's activated
+					Methods.RemoveReviveMarker(objectUniqueIndex, cellDescription)
 				end
 			end
 		end
+	end
+end
+
+Methods.OnServerPostInit = function()
+	-- Detect if this script's permanent record has been created on this server yet
+	-- If it hasn't, create it
+	if RecordStores[scriptConfig.baseObjectType].data.permanentRecords[scriptConfig.recordRefId] == nil then
+		local data = {model = scriptConfig.markerModel, name = Methods.GetLangText("reviveMarkerName"), script = "nopickup"}
+		
+		RecordStores[scriptConfig.baseObjectType].data.permanentRecords[scriptConfig.recordRefId] = data
+		
+		RecordStores[scriptConfig.baseObjectType]:Save()
+	end
+end
+
+Methods.OnPlayerDisconnect = function(pid)
+	-- Remove the revive markers of players who disconnect
+	if Methods.IsPlayerDowned(pid) and scriptConfig.useMarkers then
+		Methods.RemoveReviveMarker(pidMarkerLookup[pid])
 	end
 end
 
