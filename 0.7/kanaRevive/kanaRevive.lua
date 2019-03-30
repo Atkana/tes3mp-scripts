@@ -196,7 +196,11 @@ Methods.SendMessageToAllOnServer = function(message, exceptionPids)
 end
 
 Methods.IsPlayerDowned = function(pid)
-	return Players[pid].data.customVariables.isDowned or false
+    if Players[pid] ~= nil then
+        return Players[pid].data.customVariables.isDowned or false
+    else
+        return false
+    end
 end
 
 
