@@ -1,6 +1,8 @@
+-- ServerWarp - Release 2 - For tes3mp 0.7-alpha
+
 local ServerWarp = {}
 
---[[=Notes=
+--[[ =Notes=
    Warpdata structure:
    cell
    posX
@@ -21,18 +23,11 @@ config.forceJailPlayerRank = 1 --Players also require the permissions to forcePl
 config.setAllowWarp = 1
 
 ServerWarp.OnSetWarpCommand = function(pid, args)
-   local command
+   local command = args[1]
    local isPublic
-   local warpName = nil
+   local warpName = tableHelper.concatenateFromIndex(args, 2)
 
-   local i = 0
-   for _, arg in pairs(args) do
-      if i == 0 then command = arg end
-      if i == 1 then warpName = arg end
-      i = i + 1
-   end
-
-   if warpName == nil then
+   if warpName == "" then
       tes3mp.SendMessage(pid, "Please provide a warp name.\n", false)
       return
    end
@@ -75,18 +70,11 @@ ServerWarp.OnSetWarpCommand = function(pid, args)
 end
 
 ServerWarp.OnRemoveWarpCommand = function(pid, args)
-   local command
+   local command = args[1]
    local isPublic
-   local _warpName = nil
+   local warpName = tableHelper.concatenateFromIndex(args, 2)
 
-   local i = 0
-   for _, arg in pairs(args) do
-      if i == 0 then command = arg end
-      if i == 1 then _warpName = arg end
-      i = i + 1
-   end
-
-   if _warpName == nil then
+   if warpName == "" then
       tes3mp.SendMessage(pid, "Please provide the target warp name.\n", false)
       return
    end
@@ -119,7 +107,7 @@ ServerWarp.OnRemoveWarpCommand = function(pid, args)
 
    --If the Warp exists, remove it, otherwise error
    --(This should probably be in its own function...)
-   local warpName = string.lower(_warpName)
+   local warpName = string.lower(warpName) -- Warps are stored as lowercase
    if list[warpName] ~= nil then
       list[warpName] = nil
       if isPublic then
@@ -137,13 +125,7 @@ ServerWarp.OnRemoveWarpCommand = function(pid, args)
 end
 
 ServerWarp.OnWarpCommand = function(pid, args)
-   local warpName
-
-   local i = 0
-   for _, arg in pairs(args) do
-      if i == 1 then warpName = arg end
-      i = i + 1
-   end
+   local warpName = tableHelper.concatenateFromIndex(args, 2)
 
    local rank = Players[pid].data.settings.staffRank
 
@@ -187,20 +169,21 @@ ServerWarp.OnWarpListCommand = function(pid)
    tes3mp.SendMessage(pid, message, false)
 end
 
+ServerWarp.ForceWarp = function(pid, targetId, warpName, cantWarp)
+	if cantWarp then
+  	ServerWarp.SetCanWarp(targetId, 0)
+  end
+	
+	local foundWarp = ServerWarp.FindWarp(warpName, nil, true)
+	
+	ServerWarp.WarpPlayer(targetId, foundWarp)
+end
+
 ServerWarp.OnForcePlayerCommand = function (pid, args)
-   local targetId = nil
-   local warpName = nil
-   local cantWarp = nil
+   local targetId = args[2] or nil
+   local warpName = tableHelper.concatenateFromIndex(args, 3)
 
-   local i = 0
-   for _, arg in pairs(args) do
-      if i == 1 then targetId = arg end
-      if i == 2 then warpName = arg end
-      if i == 3 then cantWarp = arg end
-      i = i + 1
-   end
-
-   if targetId == nil or warpName == nil or cantWarp == nil then
+   if targetId == nil or warpName == "" then
       tes3mp.SendMessage(pid, "Please provide the target id and warp name.\n", false)
       return
    end
@@ -212,39 +195,26 @@ ServerWarp.OnForcePlayerCommand = function (pid, args)
       return false
    end
 
-   local foundWarp = ServerWarp.FindWarp(warpName, nil, true)
-
-   if foundWarp then
-      ServerWarp.WarpPlayer(targetId, foundWarp)
-
-      --Only gets cantWarp when called through the OnJailPlayerCommand
-      if cantWarp then
-         ServerWarp.SetCanWarp(targetId, 0)
-      end
-
-      tes3mp.SendMessage(pid, "Warped " .. --[[Players[targetId].name]] "player" .. " to " .. warpName .. ".\n", false)
-         tes3mp.SendMessage(targetId, "You were warped to " .. warpName .. " by " .. Players[pid].name .. ".\n", false)
-
-      return true
-   else
-      tes3mp.SendMessage(pid, "Couldn't find the Warp.\n", false)
-      return false
-   end
+	local foundWarp = ServerWarp.FindWarp(warpName, nil, true)
+	
+	if not foundWarp then
+		tes3mp.SendMessage(pid, "Couldn't find the Warp.\n", false)
+    return false
+	end
+	
+	ServerWarp.ForceWarp(pid, targetId, warpName, false)
+	tes3mp.SendMessage(pid, "Warped " .. --[[Players[targetId].name]] "player" .. " to " .. warpName .. ".\n", false)
+  tes3mp.SendMessage(targetId, "You were warped to " .. warpName .. " by " .. Players[pid].name .. ".\n", false)
+	
+	return true
 end
 
 --Basically uses existing commands to teleport a player to a specific warp and disable their ability to warp.
 ServerWarp.OnJailPlayerCommand = function(pid, args)
-   local targetId = nil
-   local warpName = nil
+   local targetId = args[2] or nil
+   local warpName = tableHelper.concatenateFromIndex(args, 3)
 
-   local i = 0
-   for _, arg in pairs(args) do
-      if i == 1 then targetId = arg end
-      if i == 2 then warpName = arg end
-      i = i + 1
-   end
-
-   if targetId == nil or warpName == nil then
+   if targetId == nil or warpName == "" then
       tes3mp.SendMessage(pid, "Please provide the target id and warp name.\n", false)
       return
    end
@@ -255,28 +225,30 @@ ServerWarp.OnJailPlayerCommand = function(pid, args)
       tes3mp.SendMessage(pid, "Your rank is too low to jail players.\n", false)
       return false
    end
-
-   return ServerWarp.OnForcePlayerCommand(pid, targetId, warpName, true)
+	
+	local foundWarp = ServerWarp.FindWarp(warpName, nil, true)
+	
+	if not foundWarp then
+		tes3mp.SendMessage(pid, "Couldn't find the Warp.\n", false)
+    return false
+	end
+	
+	ServerWarp.ForceWarp(pid, targetId, warpName, true)
+	tes3mp.SendMessage(pid, "Warped " .. --[[Players[targetId].name]] "player" .. " to " .. warpName .. ".\n", false)
+  tes3mp.SendMessage(targetId, "You were warped to " .. warpName .. " by " .. Players[pid].name .. ".\n", false)
+	
+	return true
 end
 
 ServerWarp.OnSetCanWarpCommand = function(pid, args)
-    local targetId = nil
-    local value = nil
-
-    local i = 0
-    for _, arg in pairs(args) do
-       if i == 1 then targetId = arg end
-       if i == 2 then value = arg end
-       i = i + 1
-    end
+	local targetId = args[2] or nil
+	local value = args[3] or nil
 
    if targetId == nil or value == nil then
-      tes3mp.SendMessage(pid, "Please specify the warp name to set.\n", false)
+      tes3mp.SendMessage(pid, "Please provide a valid player id and a value to set it to (0 or 1).\n", false)
       return false
    end
 
-   --DEBUG
-   tes3mp.SendMessage(pid, "targetId: " .. targetId .. " value: " .. value .. "\n", false)
    local rank = Players[pid].data.settings.staffRank
 
    if rank < config.setAllowWarp then
@@ -287,10 +259,10 @@ ServerWarp.OnSetCanWarpCommand = function(pid, args)
    ServerWarp.SetCanWarp(targetId, value)
 end
 
-ServerWarp.SetCanWarp = function(_pid, _val)
+ServerWarp.SetCanWarp = function(pid, val)
    --Make sure the arguments are valid
-   local pid = tonumber(_pid)
-   local val = tonumber(_val)
+   local pid = tonumber(pid)
+   local val = tonumber(val)
    --Use 0 to disable, 1 to enable
    Players[pid].data.customVariables.canServerWarp = val
    Players[pid]:Save()
@@ -339,19 +311,15 @@ ServerWarp.AddPrivateWarp = function(pid, warpName, data)
    Players[pid]:Save()
 end
 
-ServerWarp.FindWarp = function(_warpName, pid, prioritisePublic)
+ServerWarp.FindWarp = function(warpName, pid, prioritisePublic)
    local pubWarps = ServerWarp.GetPublicWarps()
    local privWarps
 
-   if not _warpName then
+   if not warpName then
       return false
    end
 
-   local warpName = string.lower(_warpName)
-
-   if not warpName then
-      return
-   end
+   local warpName = string.lower(warpName)
 
    local pubCheck = ServerWarp.SearchWarps(pubWarps, warpName)
    local privCheck
@@ -379,7 +347,7 @@ end
 
 ServerWarp.SearchWarps = function (warps, warpName)
    --should never get to here without first being turned into lowercase, but we'll do it here again just in case
-   warpName = string.lower(warpName)
+   local warpName = string.lower(warpName)
    for k,v in pairs(warps) do
       if k == warpName then
          return v
