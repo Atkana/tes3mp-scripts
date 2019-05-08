@@ -1,4 +1,4 @@
--- CellReset - Release 5 - For tes3mp 0.7-prerelease
+-- CellReset - Release 6 - For tes3mp 0.7-prerelease
 -- Adds automated cell resetting via server scripts.
 
 --[[ INSTALLATION:
@@ -27,6 +27,10 @@ scriptConfig.alwaysPreservePlaced = false --If true, the script will always pres
 --Cells entered in the blacklist are exempt from cell resets.
 scriptConfig.blacklist = {
 --"Pelagiad, Ahnassi's House",
+}
+--Object with the UniqueIndexes entered in this list will be preserved as they were from a cell reset.
+scriptConfig.preserveUniqueIndexes = {
+-- "0-1234",
 }
 
 scriptConfig.checkResetTimeRank = 0 -- The staffRank required to use the /resetTime command.
@@ -481,6 +485,13 @@ end
 -- Used when attempting to automatically reset a cell. If it fails to meet all the requirements, it'll cancel its attempt. Run every time a player loads a cell.
 Methods.TryResetCell = function(cellDescription, preserveIndexesList)
 	doDebug("TryResetCell called for cell '" .. cellDescription .. "'...")
+	
+	-- Add the configured defaults to the list of uniqueIndexes to preserve
+	local preserveIndexesList = tableHelper.shallowCopy(preserveIndexesList or {}) -- Duplicate the table because otherwise we'd be altering the original
+	for index, uniqueIndex in ipairs(scriptConfig.preserveUniqueIndexes) do
+		table.insert(preserveIndexesList, uniqueIndex)
+	end
+	
 	if Methods.CheckCellReset(cellDescription) then
 		doLog("Check passed for cell '" .. cellDescription .. "'. Resetting cell.")
 		Methods.ResetCell(cellDescription, preserveIndexesList or {})
