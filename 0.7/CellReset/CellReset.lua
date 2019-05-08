@@ -1,4 +1,4 @@
--- CellReset - Release 4 - For tes3mp 0.7-prerelease
+-- CellReset - Release 5 - For tes3mp 0.7-prerelease
 -- Adds automated cell resetting via server scripts.
 
 --[[ INSTALLATION:
@@ -272,8 +272,11 @@ Methods.ResetCell = function(cellToReset, uniqueIndexesToPreserve)
 	
 	--Somewhat future-proof this by getting the keys for what should be part of a cell from the oldCellData ;P
 	-- So currently, this should create packets, entry, lastVisit, recordLinks, and objectData entries to our newCellData
-	for key, infoWeDontNeed in pairs(oldCellData) do
-		newCellData[key] = {}
+	for key, value in pairs(oldCellData) do
+		-- Only make a new table if the original was actually a table!
+		if type(value) == "table" then
+			newCellData[key] = {}
+		end
 	end
 	
 	-- Do the same, but for packets
