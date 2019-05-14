@@ -1,4 +1,4 @@
--- flatModifiers (Advanced) - Release 2 - For tes3mp v0.7-prerelease Requires classInfo.
+-- flatModifiers (Advanced) - Release 2.1 - For tes3mp v0.7-prerelease Requires classInfo.
 
 --[[ INSTALLATION
 1) Save this file as "flatModifiers.lua" in mp-stuff/scripts
@@ -38,7 +38,7 @@ config.classAttributeBonus = 3 -- How many skill advances get added to an attrib
 local function basicMode(pid)
 	for i = 0, 7 do
 		if i ~= 7 or config.includeLuck then --Avoid giving Luck (7) any bonus, unless configured to
-			Players[pid].data.attributeSkillIncreases[tes3mp.GetAttributeName(i)] = config.basicAttributeIncreases
+			Players[pid].data.attributes[tes3mp.GetAttributeName(i)].skillIncrease = config.basicAttributeIncreases
 		end
 	end
 	Players[pid]:LoadAttributes()
@@ -72,7 +72,7 @@ local function classMode(pid)
 		if i ~= 7 or config.includeLuck then --Avoid giving Luck (7) any bonus, unless configured to
 			local amount = config.classBase + (changes[i] or 0)
 			amount = math.min(math.floor(amount), 10)
-			Players[pid].data.attributeSkillIncreases[tes3mp.GetAttributeName(i)] = amount
+			Players[pid].data.attributes[tes3mp.GetAttributeName(i)].skillIncrease = amount
 		end
 	end
 	
