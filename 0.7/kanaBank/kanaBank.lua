@@ -3,36 +3,21 @@
 
 --[[ INSTALLATION
 = GENERAL =
-a) Save this file as "kanaBank.lua" in mp-stuff/scripts
+a) Save this file as "kanaBank.lua" in server/scripts/custom
 
-= IN SERVERCORE.LUA =
-a) Find the line [ menuHelper = require("menuHelper") ]. Add the following BENEATH it:
-	[ kanaBank = require("kanaBank") ]
-b) Find the line [ function OnServerPostInit() ]. Add the following BENEATH it: [ kanaBank.OnServerPostInit() ]
-	
-= IN COMMANDHANDLER.LUA =
-a) Find the section:
-	[ else
-		local message = "Not a valid command. Type /help for more info.\n" ]
-	Add the following ABOVE it:
-	[ elseif cmd[1] == "bank" then kanaBank.OnBankCommand(pid, cmd) ]
-
-= IN EVENTHANDLER.LUA =
-a) Find the function eventHandler.OnObjectActivate. Inside, find the line [ tes3mp.LogAppend(enumerations.log.INFO, debugMessage) ]. Add the following BENEATH it:
-	[ if kanaBank.ActivationCheck(index) then isValid = false end ]
-b) Find the function eventHandler.OnObjectDelete. Inside, find the line [ if tableHelper.containsValue(config.disallowedDeleteRefIds, refId) or ]. Add the following ABOVE it:
-	[ if kanaBank.DeletionCheck(index, rejectedObjects) then isValid = false end ]
+= IN customScripts.LUA =
+a) kanaBank = require("custom.kanaBank")
 ]]
 
 local scriptConfig = {}
 
 scriptConfig.useBankerRank = 0 -- The staffRank required to use a bank via bankers
-scriptConfig.useBankCommandRank = 0 -- The staffRank required to use the /bank command
-scriptConfig.openOtherPlayersBankRank = 1 -- The staffRank required to use the /bank playername command
+scriptConfig.useBankCommandRank = 1 -- The staffRank required to use the /bank command
+scriptConfig.openOtherPlayersBankRank = 2 -- The staffRank required to use the /bank playername command
 
 -- Any object that's identified as a "banker" will open a player's bank on activation
 -- Provided the player meets the useBankerRank requirement. This /should/ override the default activation
-scriptConfig.bankerRefIds = {"m'aiq",}
+scriptConfig.bankerRefIds = {}
 scriptConfig.bankerUniqueIndexes = {}
 
 -- Setting the following to true will have the script block any attempts at deleting a banker/bank storage item respectively
@@ -61,10 +46,6 @@ local lang = {
 }
 
 ---------------------------------------------------------------------------------------
-tableHelper = require("tableHelper")
-jsonInterface = require("jsonInterface")
-enumerations = require("enumerations")
-logicHandler = require("logicHandler")
 
 local Methods = {}
 
@@ -87,11 +68,11 @@ Methods.GetLangText = function(key, data)
 end
 
 Methods.Save = function()
-	jsonInterface.save("kanaBank.json", scriptData)
+	jsonInterface.save("custom/kanaBank.json", scriptData)
 end
 
 Methods.Load = function()
-	local loadedData = jsonInterface.load("kanaBank.json")
+	local loadedData = jsonInterface.load("custom/kanaBank.json")
 	
 	if loadedData then
 		scriptData = loadedData
@@ -403,61 +384,84 @@ Methods.OnBankCommand = function(pid, cmd)
 end
 
 -- Returning true signals we want to block default activation
-Methods.ActivationCheck = function(index)
-	tes3mp.ReadReceivedObjectList()
-	
+Methods.ActivationCheck = function(eventStatus, pid, cellDescription, objects, players)
 	-- Only bothered about the activation if:
 	-- > The object is an object (not a player)
 	-- > A player is the one doing the activation
-	if not tes3mp.IsObjectPlayer(index) and tes3mp.DoesObjectHavePlayerActivating(index) then
-		local refId = tes3mp.GetObjectRefId(index)
-		local uniqueIndex = tes3mp.GetObjectRefNum(index) .. "-" .. tes3mp.GetObjectMpNum(index)
-		
-		-- Check whether or not this is a banker
-		if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
-			-- Check if the player is allowed to access banks via bankers
-			local pid = tes3mp.GetObjectActivatingPid(index)
-			local playerRank = Players[pid].data.settings.staffRank
-			local playerName = getName(pid)
-			
-			if not (playerRank >= scriptConfig.useBankerRank) then
-				-- The player doesn't have the required rank to use bankers
-				doLog(playerName .. " activated a banker, but doesn't have a sufficient rank to use it.")
-				msg(pid, Methods.GetLangText("useBankerFailNoRank"))
-			else
-				-- The player can use bankers
-				-- Check whether or not the player has a container
-				if not Methods.DoesPlayerHaveContainer(playerName) then
-					-- Since they don't, create one!
-					Methods.CreateContainerForPlayer(playerName)
-				end
-				
-				-- Open the player's container for them
-				Methods.OpenNamedPlayersContainerForPid(pid, playerName)
-				doLog(playerName .. " opened their bank via the banker " .. refId .. " " .. uniqueIndex .. ".")
-			end
-			
-			return true -- By returning true, we're signalling we want to prevent the default activation
-		end
-	end
+    doLog("pid:" .. pid .."\ncellDescription:" .. cellDescription)
+    for _,object in pairs(objects) do
+        local refId = object.refid
+        local uniqueIndex = object.uniqueIndex
+            
+        -- Check whether or not this is a banker
+        if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
+            -- Check if the player is allowed to access banks via bankers
+            local playerRank = Players[pid].data.settings.staffRank
+            
+            if not (playerRank >= scriptConfig.useBankerRank) then
+                -- The player doesn't have the required rank to use bankers
+                doLog(playerName .. " activated a banker, but doesn't have a sufficient rank to use it.")
+                msg(pid, Methods.GetLangText("useBankerFailNoRank"))
+                return customEventHooks.makeEventStatus(false,false)
+            else
+                doLog(playerName .. " activated a banker, accessed their bank.")
+                return customEventHooks.makeEventStatus(false,nil)
+                --[[ The player can use bankers
+                -- Check whether or not the player has a container
+                if not Methods.DoesPlayerHaveContainer(playerName) then
+                    -- Since they don't, create one!
+                    Methods.CreateContainerForPlayer(playerName)
+                end
+                    
+                -- Open the player's container for them
+                Methods.OpenNamedPlayersContainerForPid(pid, playerName)
+                doLog(playerName .. " opened their bank via the banker " .. refId .. " " .. uniqueIndex .. ".")
+                ]]--
+            end
+        end
+        --was not a banker
+        return customEventHooks.makeEventStatus(nil,nil)
+    end
+end
+
+Methods.OnObjectActivate = function(eventStatus, pid, cellDescription, objects, players)
+    if eventStatus.validCustomHandlers ~= false then
+        for _,object in pairs(objects) do
+            local refId = object.refId
+            local uniqueIndex = object.uniqueIndex
+            if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
+                local playerName = getName(pid)
+                -- Check whether or not the player has a container
+                if not Methods.DoesPlayerHaveContainer(playerName) then
+                    -- Since they don't, create one!
+                    Methods.CreateContainerForPlayer(playerName)
+                end
+                -- Open the player's container for them
+                Methods.OpenNamedPlayersContainerForPid(pid,playerName)
+                doLog(playerName .. " opened their bank via banker.")
+            end
+        end
+    end
 end
 
 -- Returning true signals we want to block deletion
-Methods.DeletionCheck = function(index, rejectedObjects)
-	tes3mp.ReadReceivedObjectList()
-	
-	local refId = tes3mp.GetObjectRefId(index)
-	local uniqueIndex = tes3mp.GetObjectRefNum(index) .. "-" .. tes3mp.GetObjectMpNum(index)
-	
-	if not Methods.IsAllowedDeleteRefId(refId) or not Methods.IsAllowedDeleteUniqueIndex(uniqueIndex) then
-		-- The object is protected by this script!
-		table.insert(rejectedObjects, refId .. " " .. uniqueIndex)
-		doDebug("Prevented deletion of object " .. refId .. " " .. uniqueIndex)
-		return true
-	end
+Methods.DeletionCheck = function(pid, cellDescription, objects)
+	for _,object in pairs(objects) do
+        local refId = object.refId
+        local uniqueIndex = object.uniqueIndex
+        
+        if not Methods.IsAllowedDeleteRefId(refId) or not Methods.IsAllowedDeleteUniqueIndex(uniqueIndex) then
+            -- The object is protected by this script!
+            table.insert(rejectedObjects, refId .. " " .. uniqueIndex)
+            doDebug("Prevented deletion of object " .. refId .. " " .. uniqueIndex)
+            return customEventHooks.makeEventStatus(false,false)
+        end
+    end
+    
+    return customEventHooks.makeEventStatus(nil,nil)
 end
 
-Methods.OnServerPostInit = function()
+Methods.OnServerPostInit = function(eventStatus)
 	-- Load data
 	Methods.Load()
 	
@@ -501,5 +505,10 @@ Methods.OnServerPostInit = function()
 	end
 end
 
+customEventHooks.registerValidator("OnObjectActivate",Methods.ActivationCheck)
+customEventHooks.registerValidator("OnObjectDelete",Methods.DeletionCheck)
+customEventHooks.registerHandler("OnServerPostInit",Methods.OnServerPostInit)
+customEventHooks.registerHandler("OnObjectActivate",Methods.OnObjectActivate)
+customCommandHooks.registerCommand("bank",Methods.OnBankCommand)
 -------------
 return Methods

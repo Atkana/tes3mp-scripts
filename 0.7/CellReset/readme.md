@@ -22,24 +22,9 @@ Configuration can be done from within the file itself. Here is a list of all the
 
 ## Installation
 ### Save the Script
-Save the file as `CellReset.lua` inside your `mp-stuff/scripts` folder.
-### Edits to `serverCore.lua`
-- Find the line `"menuHelper = require("menuHelper")"`. Add the following *beneath* it: ```CellReset = require("CellReset")```
-- Inside `OnCellLoad`, find the line `eventHandler.OnCellLoad(pid, cellDescription)`. Add the following *above* it: ```CellReset.TryResetCell(cellDescription)```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```CellReset.Init()```
-### Edits to `commandHandler.lua`
-- Find the section
-```
-else
-	local message = "Not a valid command. Type /help for more info.\n"
-```
-Add the following *above* it:
-```
-elseif cmd[1] == "resettime" then
-	CellReset.OnTimePromptCommand(pid, cmd)
-elseif cmd[1] == "forcereset" then
-	CellReset.OnForceResetCommand(pid, cmd)
-```
+Save the file as `CellReset.lua` inside your `server/scripts/custom` folder.
+### Edits to `customScripts.lua`
+- CellReset = require("custom.CellReset")
 
 ## Script Methods
 There are a number of functions made available for other scripts to utilise. See the file for more information on what each of them do.

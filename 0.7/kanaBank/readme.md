@@ -37,17 +37,6 @@ Almost every piece of text that's presented to the player can easily be changed 
 
 ## Installation
 ### General
-- Save `kanaBank.lua` into `mp-stuff/scripts`
-### Edits to `serverCore.lua`
-- Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaBank = require("kanaBank")```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```kanaBank.OnServerPostInit()```
-### Edits to `commandHandler.lua`
-- Find the section
-```
-else
-	local message = "Not a valid command. Type /help for more info.\n"
-```
-Add the following *above* it: ```elseif cmd[1] == "bank" then kanaBank.OnBankCommand(pid, cmd)```
-### Edits to `eventHandler.lua`
-- Find the function `eventHandler.OnObjectActivate`. Inside, find the line `tes3mp.LogAppend(enumerations.log.INFO, debugMessage)`. Add the following *beneath* it: ```if kanaBank.ActivationCheck(index) then isValid = false end```
-- Find the function `eventHandler.OnObjectDelete`. Inside, find the line `if tableHelper.containsValue(config.disallowedDeleteRefIds, refId) or`. Add the following *above* it: ```if kanaBank.DeletionCheck(index, rejectedObjects) then isValid = false end```
+- Save `kanaBank.lua` into `server/scripts/custom`
+### Edits to `customScripts.lua`
+- kanaBank = require("custom.kanaBank")

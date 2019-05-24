@@ -1,32 +1,14 @@
 -- CellReset - Release 6 - For tes3mp 0.7-prerelease
 -- Adds automated cell resetting via server scripts.
 
---[[ INSTALLATION:
-1) Save file as "CellReset.lua" in mp-stuff/scripts
-IN SERVECORE.LUA:
-	a) Add [ CellReset = require("CellReset") ] beneath the line "menuHelper = require("menuHelper")"
-	b) Add the following before "eventHandler.OnCellLoad(pid, cellDescription)" in OnCellLoad
-		[ CellReset.TryResetCell(cellDescription) ]
-	c) Add the following to OnServerPostInit
-		[ CellReset.Init() ]
-IN COMMANDHANDLER.LUA
-	ABOVE the section [ else
-			local message = "Not a valid command. Type /help for more info.\n" ]
-	Add the following:
-		[ elseif cmd[1] == "resettime" then
-			CellReset.OnTimePromptCommand(pid, cmd)
-		elseif cmd[1] == "forcereset" then
-			CellReset.OnForceResetCommand(pid, cmd) ]
-]]
-
 local scriptConfig = {}
 scriptConfig.resetTime = 259200 --The time in (real life) seconds that must've passed before a cell is attempted to be reset. 259200 seconds is 3 days. Set to -1 to disable automatic resetting
 scriptConfig.preserveCellChanges = true --If true, the script won't reset actors that have moved into/from the cell. At the moment, MUST be true.
-scriptConfig.alwaysPreservePlaced = false --If true, the script will always preserve any placed objects, even in cells that it's free to delete from
+scriptConfig.alwaysPreservePlaced = true --If true, the script will always preserve any placed objects, even in cells that it's free to delete from
 
 --Cells entered in the blacklist are exempt from cell resets.
 scriptConfig.blacklist = {
---"Pelagiad, Ahnassi's House",
+"Clutter Warehouse - Everything Must Go!",
 }
 --Object with the UniqueIndexes entered in this list will be preserved as they were from a cell reset.
 scriptConfig.preserveUniqueIndexes = {
@@ -483,7 +465,7 @@ Methods.ResetCell = function(cellToReset, uniqueIndexesToPreserve)
 end
 
 -- Used when attempting to automatically reset a cell. If it fails to meet all the requirements, it'll cancel its attempt. Run every time a player loads a cell.
-Methods.TryResetCell = function(cellDescription, preserveIndexesList)
+Methods.TryResetCell = function(eventStatus, pid, cellDescription, preserveIndexesList)
 	doDebug("TryResetCell called for cell '" .. cellDescription .. "'...")
 	
 	-- Add the configured defaults to the list of uniqueIndexes to preserve
@@ -495,10 +477,10 @@ Methods.TryResetCell = function(cellDescription, preserveIndexesList)
 	if Methods.CheckCellReset(cellDescription) then
 		doLog("Check passed for cell '" .. cellDescription .. "'. Resetting cell.")
 		Methods.ResetCell(cellDescription, preserveIndexesList or {})
-		return true
+		return customEventHooks.makeEventStatus(nil,nil)
 	else
 		doDebug("TryResetCell aborted for cell '" .. cellDescription .. "'")
-		return false
+		return customEventHooks.makeEventStatus(nil,nil)
 	end
 end
 
@@ -675,7 +657,7 @@ Methods.OnForceResetCommand = function(pid, cmd)
 	end
 end
 
-Methods.Init = function()
+Methods.Init = function(eventStatus)
 	local count = 0
 	
 	for index, cellDescription in pairs(scriptConfig.blacklist) do
@@ -687,5 +669,10 @@ Methods.Init = function()
 		doLog("Added " .. count .. " cells from CellReset blacklist to exemptions list.")
 	end
 end
+
+customEventHooks.registerValidator("OnCellLoad",Methods.TryResetCell)
+customEventHooks.registerHandler("OnServerPostInit",Methods.Init)
+customCommandHooks.registerCommand("resettime",Methods.OnTimePrompt)
+customCommandHooks.registerCommand("forcereset",Methods.OnForceResetCommand)
 
 return Methods
