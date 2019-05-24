@@ -12,12 +12,12 @@ a) kanaBank = require("custom.kanaBank")
 local scriptConfig = {}
 
 scriptConfig.useBankerRank = 0 -- The staffRank required to use a bank via bankers
-scriptConfig.useBankCommandRank = 1 -- The staffRank required to use the /bank command
-scriptConfig.openOtherPlayersBankRank = 2 -- The staffRank required to use the /bank playername command
+scriptConfig.useBankCommandRank = 0 -- The staffRank required to use the /bank command
+scriptConfig.openOtherPlayersBankRank = 1 -- The staffRank required to use the /bank playername command
 
 -- Any object that's identified as a "banker" will open a player's bank on activation
 -- Provided the player meets the useBankerRank requirement. This /should/ override the default activation
-scriptConfig.bankerRefIds = {}
+scriptConfig.bankerRefIds = {"m'aiq"}
 scriptConfig.bankerUniqueIndexes = {}
 
 -- Setting the following to true will have the script block any attempts at deleting a banker/bank storage item respectively
