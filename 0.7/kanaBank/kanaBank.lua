@@ -1,4 +1,4 @@
--- kanaBank - Release 2 - For tes3mp 0.7-prerelease
+-- kanaBank - Release 3 - For tes3mp 0.7-alpha
 -- Implements a banking system for players to utilise
 
 --[[ INSTALLATION
@@ -17,7 +17,7 @@ scriptConfig.openOtherPlayersBankRank = 1 -- The staffRank required to use the /
 
 -- Any object that's identified as a "banker" will open a player's bank on activation
 -- Provided the player meets the useBankerRank requirement. This /should/ override the default activation
-scriptConfig.bankerRefIds = {"m'aiq"}
+scriptConfig.bankerRefIds = {"m'aiq",}
 scriptConfig.bankerUniqueIndexes = {}
 
 -- Setting the following to true will have the script block any attempts at deleting a banker/bank storage item respectively
@@ -383,63 +383,58 @@ Methods.OnBankCommand = function(pid, cmd)
 	end
 end
 
--- Returning true signals we want to block default activation
+-- Validator for activations. Used to prevent default behaviour for players activating bankers.
 Methods.ActivationCheck = function(eventStatus, pid, cellDescription, objects, players)
-	-- Only bothered about the activation if:
-	-- > The object is an object (not a player)
-	-- > A player is the one doing the activation
-    doLog("pid:" .. pid .."\ncellDescription:" .. cellDescription)
-    for _,object in pairs(objects) do
-        local refId = object.refid
-        local uniqueIndex = object.uniqueIndex
-            
-        -- Check whether or not this is a banker
-        if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
-            -- Check if the player is allowed to access banks via bankers
-            local playerRank = Players[pid].data.settings.staffRank
-            
-            if not (playerRank >= scriptConfig.useBankerRank) then
-                -- The player doesn't have the required rank to use bankers
-                doLog(playerName .. " activated a banker, but doesn't have a sufficient rank to use it.")
-                msg(pid, Methods.GetLangText("useBankerFailNoRank"))
-                return customEventHooks.makeEventStatus(false,false)
-            else
-                doLog(playerName .. " activated a banker, accessed their bank.")
-                return customEventHooks.makeEventStatus(false,nil)
-                --[[ The player can use bankers
-                -- Check whether or not the player has a container
-                if not Methods.DoesPlayerHaveContainer(playerName) then
-                    -- Since they don't, create one!
-                    Methods.CreateContainerForPlayer(playerName)
-                end
-                    
-                -- Open the player's container for them
-                Methods.OpenNamedPlayersContainerForPid(pid, playerName)
-                doLog(playerName .. " opened their bank via the banker " .. refId .. " " .. uniqueIndex .. ".")
-                ]]--
-            end
-        end
-        --was not a banker
-        return customEventHooks.makeEventStatus(nil,nil)
-    end
+	for _,object in pairs(objects) do
+		-- Only bothered about the activation if:
+		-- > The object is an object (not a player)
+		-- > A player is the one doing the activation
+		if object.pid == nil and object.activatingPid ~= nil then
+			local refId = object.refid
+			local uniqueIndex = object.uniqueIndex
+
+			-- Check whether or not this is a banker
+			if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
+				 -- Prevent the activation of the banker object, regardless of whether or not the player can actually use the banker
+				return customEventHooks.makeEventStatus(false, nil)
+			end
+		end
+		-- Was either not a banker, or not a player doing the activation. Either way, we don't care about it.
+		return customEventHooks.makeEventStatus(nil,nil)
+	end
 end
 
 Methods.OnObjectActivate = function(eventStatus, pid, cellDescription, objects, players)
     if eventStatus.validCustomHandlers ~= false then
         for _,object in pairs(objects) do
-            local refId = object.refId
-            local uniqueIndex = object.uniqueIndex
-            if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
-                local playerName = getName(pid)
-                -- Check whether or not the player has a container
-                if not Methods.DoesPlayerHaveContainer(playerName) then
-                    -- Since they don't, create one!
-                    Methods.CreateContainerForPlayer(playerName)
-                end
-                -- Open the player's container for them
-                Methods.OpenNamedPlayersContainerForPid(pid,playerName)
-                doLog(playerName .. " opened their bank via banker.")
-            end
+            if object.pid == nil and object.activatingPid ~= nil then
+				local refId = object.refId
+				local uniqueIndex = object.uniqueIndex
+				local pid = object.activatingPid
+				
+				local playerRank = Players[pid].data.settings.staffRank
+				local playerName = getName(pid)
+
+				if Methods.IsBankerUniqueIndex(uniqueIndex) or Methods.IsBankerRefId(refId) then
+					if not (playerRank >= scriptConfig.useBankerRank) then
+						-- The player doesn't have the required rank to use bankers
+						doLog(playerName .. " activated a banker, but doesn't have a sufficient rank to use it.")
+						msg(pid, Methods.GetLangText("useBankerFailNoRank"))
+					else
+						doLog(playerName .. " activated a banker, accessed their bank.")
+						-- The player can use bankers
+						-- Check whether or not the player has a container
+						if not Methods.DoesPlayerHaveContainer(playerName) then
+							-- Since they don't, create one!
+							Methods.CreateContainerForPlayer(playerName)
+						end
+
+						-- Open the player's container for them
+						Methods.OpenNamedPlayersContainerForPid(pid, playerName)
+						doLog(playerName .. " opened their bank via the banker " .. refId .. " " .. uniqueIndex .. ".")
+					end
+				end
+			end
         end
     end
 end
@@ -452,7 +447,6 @@ Methods.DeletionCheck = function(pid, cellDescription, objects)
         
         if not Methods.IsAllowedDeleteRefId(refId) or not Methods.IsAllowedDeleteUniqueIndex(uniqueIndex) then
             -- The object is protected by this script!
-            table.insert(rejectedObjects, refId .. " " .. uniqueIndex)
             doDebug("Prevented deletion of object " .. refId .. " " .. uniqueIndex)
             return customEventHooks.makeEventStatus(false,false)
         end
