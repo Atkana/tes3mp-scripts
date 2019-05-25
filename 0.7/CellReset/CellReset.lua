@@ -1,4 +1,4 @@
--- CellReset - Release 6 - For tes3mp 0.7-prerelease
+-- CellReset - Release 7 - For tes3mp 0.7-alpha
 -- Adds automated cell resetting via server scripts.
 
 local scriptConfig = {}
@@ -465,7 +465,7 @@ Methods.ResetCell = function(cellToReset, uniqueIndexesToPreserve)
 end
 
 -- Used when attempting to automatically reset a cell. If it fails to meet all the requirements, it'll cancel its attempt. Run every time a player loads a cell.
-Methods.TryResetCell = function(eventStatus, pid, cellDescription, preserveIndexesList)
+Methods.TryResetCell = function(cellDescription, preserveIndexesList)
 	doDebug("TryResetCell called for cell '" .. cellDescription .. "'...")
 	
 	-- Add the configured defaults to the list of uniqueIndexes to preserve
@@ -477,11 +477,19 @@ Methods.TryResetCell = function(eventStatus, pid, cellDescription, preserveIndex
 	if Methods.CheckCellReset(cellDescription) then
 		doLog("Check passed for cell '" .. cellDescription .. "'. Resetting cell.")
 		Methods.ResetCell(cellDescription, preserveIndexesList or {})
-		return customEventHooks.makeEventStatus(nil,nil)
+		return true
 	else
 		doDebug("TryResetCell aborted for cell '" .. cellDescription .. "'")
-		return customEventHooks.makeEventStatus(nil,nil)
+		return false
 	end
+end
+
+-- Because we need to try and reset the cell before it's actually loaded by the player, we need to do this during the validator checks
+Methods.OnCellLoadValidator = function(eventStatus, pid, cellDescription)
+	if eventStatus.validDefaultHandler ~= false then
+		Methods.TryResetCell(cellDescription)	
+	end
+	return customEventHooks.makeEventStatus(nil,nil)
 end
 
 -- Run by the /resetTime command
@@ -670,7 +678,7 @@ Methods.Init = function(eventStatus)
 	end
 end
 
-customEventHooks.registerValidator("OnCellLoad",Methods.TryResetCell)
+customEventHooks.registerValidator("OnCellLoad",Methods.OnCellLoadValidator)
 customEventHooks.registerHandler("OnServerPostInit",Methods.Init)
 customCommandHooks.registerCommand("resettime",Methods.OnTimePrompt)
 customCommandHooks.registerCommand("forcereset",Methods.OnForceResetCommand)
