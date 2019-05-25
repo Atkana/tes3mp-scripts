@@ -1,7 +1,7 @@
 # kanaBank
 Provides access to personal storage for players to utilise via command, or by activating pre-designating "bankers".
 
-*Currently written for a version of 0.7-prerelease*
+*Currently written for a version of 0.7-alpha*
 
 ## Usage
 Banks provide a personal storage for every player, which can be accessed in a variety of ways depending on configuration. Those that meet the `useBankCommandRank` rank requirement can use the `/bank` to open their bank storage, and those that meet the `openOtherPlayersBankRank` rank can use `/bank PlayerName` to open the banks of others... Otherwise (or in addition to), players that meet the rank of `useBankerRank` can access their bank storage by activating a banker object (this is useful, if you want to restrict where players will be able to access the storage). What object counts as a banker object is defined by the server owner via configuration, or outside scripts utilising the provided methods.
