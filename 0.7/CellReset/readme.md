@@ -1,7 +1,7 @@
 # CellReset
 Cell Reset is a script for periodically resetting the game's cells to their default states, in a manner that tries to avoid all the potential problems other methods might cause (for example, manually deleting a cell's `.json` entry can lead to problems!). The server owner can configure how often these happen, as well as provide a list of cells that they don't want to be affected.
 
-*Currently written for a version of 0.7-prerelease*
+*Currently written for a version of 0.7-alpha*
 
 ## Usage
 By default, the script is supposed to work automatically, resetting the state of any cell as it's loaded after 3 IRL days (time can be configured) have passed since its last reset (or first loaded if it hasn't been reset at all). With some configuration, the automatic resetting can be disabled, and instead left to other scripts, or admins to handle via the `/forceReset` command. Here are the commands added by Cell Reset:
