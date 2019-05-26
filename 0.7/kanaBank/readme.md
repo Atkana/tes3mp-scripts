@@ -1,7 +1,7 @@
 # kanaBank
 Provides access to personal storage for players to utilise via command, or by activating pre-designating "bankers".
 
-*Currently written for a version of 0.7-prerelease*
+*Currently written for a version of 0.7-alpha*
 
 ## Usage
 Banks provide a personal storage for every player, which can be accessed in a variety of ways depending on configuration. Those that meet the `useBankCommandRank` rank requirement can use the `/bank` to open their bank storage, and those that meet the `openOtherPlayersBankRank` rank can use `/bank PlayerName` to open the banks of others... Otherwise (or in addition to), players that meet the rank of `useBankerRank` can access their bank storage by activating a banker object (this is useful, if you want to restrict where players will be able to access the storage). What object counts as a banker object is defined by the server owner via configuration, or outside scripts utilising the provided methods.
@@ -37,17 +37,6 @@ Almost every piece of text that's presented to the player can easily be changed 
 
 ## Installation
 ### General
-- Save `kanaBank.lua` into `mp-stuff/scripts`
-### Edits to `serverCore.lua`
-- Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaBank = require("kanaBank")```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```kanaBank.OnServerPostInit()```
-### Edits to `commandHandler.lua`
-- Find the section
-```
-else
-	local message = "Not a valid command. Type /help for more info.\n"
-```
-Add the following *above* it: ```elseif cmd[1] == "bank" then kanaBank.OnBankCommand(pid, cmd)```
-### Edits to `eventHandler.lua`
-- Find the function `eventHandler.OnObjectActivate`. Inside, find the line `tes3mp.LogAppend(enumerations.log.INFO, debugMessage)`. Add the following *beneath* it: ```if kanaBank.ActivationCheck(index) then isValid = false end```
-- Find the function `eventHandler.OnObjectDelete`. Inside, find the line `if tableHelper.containsValue(config.disallowedDeleteRefIds, refId) or`. Add the following *above* it: ```if kanaBank.DeletionCheck(index, rejectedObjects) then isValid = false end```
+- Save `kanaBank.lua` into `server/scripts/custom`
+### Edits to `customScripts.lua`
+- kanaBank = require("custom.kanaBank")

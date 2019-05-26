@@ -1,23 +1,5 @@
--- CellReset - Release 6 - For tes3mp 0.7-prerelease
+-- CellReset - Release 7 - For tes3mp 0.7-alpha
 -- Adds automated cell resetting via server scripts.
-
---[[ INSTALLATION:
-1) Save file as "CellReset.lua" in mp-stuff/scripts
-IN SERVECORE.LUA:
-	a) Add [ CellReset = require("CellReset") ] beneath the line "menuHelper = require("menuHelper")"
-	b) Add the following before "eventHandler.OnCellLoad(pid, cellDescription)" in OnCellLoad
-		[ CellReset.TryResetCell(cellDescription) ]
-	c) Add the following to OnServerPostInit
-		[ CellReset.Init() ]
-IN COMMANDHANDLER.LUA
-	ABOVE the section [ else
-			local message = "Not a valid command. Type /help for more info.\n" ]
-	Add the following:
-		[ elseif cmd[1] == "resettime" then
-			CellReset.OnTimePromptCommand(pid, cmd)
-		elseif cmd[1] == "forcereset" then
-			CellReset.OnForceResetCommand(pid, cmd) ]
-]]
 
 local scriptConfig = {}
 scriptConfig.resetTime = 259200 --The time in (real life) seconds that must've passed before a cell is attempted to be reset. 259200 seconds is 3 days. Set to -1 to disable automatic resetting
@@ -502,6 +484,14 @@ Methods.TryResetCell = function(cellDescription, preserveIndexesList)
 	end
 end
 
+-- Because we need to try and reset the cell before it's actually loaded by the player, we need to do this during the validator checks
+Methods.OnCellLoadValidator = function(eventStatus, pid, cellDescription)
+	if eventStatus.validDefaultHandler ~= false then
+		Methods.TryResetCell(cellDescription)	
+	end
+	return customEventHooks.makeEventStatus(nil,nil)
+end
+
 -- Run by the /resetTime command
 Methods.OnTimePromptCommand = function(pid, cmd)
 	local useTempLoad = false
@@ -675,7 +665,7 @@ Methods.OnForceResetCommand = function(pid, cmd)
 	end
 end
 
-Methods.Init = function()
+Methods.Init = function(eventStatus)
 	local count = 0
 	
 	for index, cellDescription in pairs(scriptConfig.blacklist) do
@@ -687,5 +677,10 @@ Methods.Init = function()
 		doLog("Added " .. count .. " cells from CellReset blacklist to exemptions list.")
 	end
 end
+
+customEventHooks.registerValidator("OnCellLoad",Methods.OnCellLoadValidator)
+customEventHooks.registerHandler("OnServerPostInit",Methods.Init)
+customCommandHooks.registerCommand("resettime",Methods.OnTimePrompt)
+customCommandHooks.registerCommand("forcereset",Methods.OnForceResetCommand)
 
 return Methods

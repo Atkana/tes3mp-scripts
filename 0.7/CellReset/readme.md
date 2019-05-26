@@ -1,7 +1,7 @@
 # CellReset
 Cell Reset is a script for periodically resetting the game's cells to their default states, in a manner that tries to avoid all the potential problems other methods might cause (for example, manually deleting a cell's `.json` entry can lead to problems!). The server owner can configure how often these happen, as well as provide a list of cells that they don't want to be affected.
 
-*Currently written for a version of 0.7-prerelease*
+*Currently written for a version of 0.7-alpha*
 
 ## Usage
 By default, the script is supposed to work automatically, resetting the state of any cell as it's loaded after 3 IRL days (time can be configured) have passed since its last reset (or first loaded if it hasn't been reset at all). With some configuration, the automatic resetting can be disabled, and instead left to other scripts, or admins to handle via the `/forceReset` command. Here are the commands added by Cell Reset:
@@ -22,24 +22,9 @@ Configuration can be done from within the file itself. Here is a list of all the
 
 ## Installation
 ### Save the Script
-Save the file as `CellReset.lua` inside your `mp-stuff/scripts` folder.
-### Edits to `serverCore.lua`
-- Find the line `"menuHelper = require("menuHelper")"`. Add the following *beneath* it: ```CellReset = require("CellReset")```
-- Inside `OnCellLoad`, find the line `eventHandler.OnCellLoad(pid, cellDescription)`. Add the following *above* it: ```CellReset.TryResetCell(cellDescription)```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```CellReset.Init()```
-### Edits to `commandHandler.lua`
-- Find the section
-```
-else
-	local message = "Not a valid command. Type /help for more info.\n"
-```
-Add the following *above* it:
-```
-elseif cmd[1] == "resettime" then
-	CellReset.OnTimePromptCommand(pid, cmd)
-elseif cmd[1] == "forcereset" then
-	CellReset.OnForceResetCommand(pid, cmd)
-```
+Save the file as `CellReset.lua` inside your `server/scripts/custom` folder.
+### Edits to `customScripts.lua`
+- CellReset = require("custom.CellReset")
 
 ## Script Methods
 There are a number of functions made available for other scripts to utilise. See the file for more information on what each of them do.
