@@ -1,5 +1,5 @@
--- kanaFurniture - Release 2.1 - For tes3mp v0.7
--- REQUIRES: decorateHelp (https://github.com/Atkana/tes3mp-scripts/blob/master/decorateHelp.lua)
+-- kanaFurniture - Release 3 - For tes3mp v0.7-alpha
+-- REQUIRES: decorateHelp (https://github.com/Atkana/tes3mp-scripts/blob/master/0.7/decorateHelp.lua)
 -- Purchase and place an assortment of furniture
 
 -- NOTE FOR SCRIPTS: pname requires the name to be in all LOWERCASE
@@ -499,69 +499,47 @@ local function getSortedPlayerFurnitureInventory(pid)
 end
 
 local function placeFurniture(refId, loc, cell)
-	local mpNum = WorldInstance:GetCurrentMpNum() + 1
+	local useTempLoad = false
+	
 	local location = {
 		posX = loc.x, posY = loc.y, posZ = loc.z,
 		rotX = 0, rotY = 0, rotZ = 0
 	}
-	local refIndex =  0 .. "-" .. mpNum
-	
-	WorldInstance:SetCurrentMpNum(mpNum)
-	tes3mp.SetCurrentMpNum(mpNum)
 	
 	if not LoadedCells[cell] then
-		--TODO: Should ideally be temporary
 		logicHandler.LoadCell(cell)
+		useTempLoad = true
 	end
 
-	LoadedCells[cell]:InitializeObjectData(refIndex, refId)
-	LoadedCells[cell].data.objectData[refIndex].location = location
-	table.insert(LoadedCells[cell].data.packets.place, refIndex)
- 
-	for onlinePid, player in pairs(Players) do
-		if player:IsLoggedIn() then
-			tes3mp.InitializeEvent(onlinePid)
-			tes3mp.SetEventCell(cell)
-			tes3mp.SetObjectRefId(refId)
-			tes3mp.SetObjectRefNumIndex(0)
-			tes3mp.SetObjectMpNum(mpNum)
-			tes3mp.SetObjectPosition(location.posX, location.posY, location.posZ)
-			tes3mp.SetObjectRotation(location.rotX, location.rotY, location.rotZ)
-			tes3mp.AddWorldObject()
-			tes3mp.SendObjectPlace()
-		end
+	local uniqueIndex = logicHandler.CreateObjectAtLocation(cell, location, refId, "place")
+	
+	if useTempLoad then
+		logicHandler.UnloadCell(cell)
 	end
 	
-	LoadedCells[cell]:Save()
-	
-	return refIndex
+	return uniqueIndex
 end
 
 local function removeFurniture(refIndex, cell)
 	--If for some reason the cell isn't loaded, load it. Causes a bit of spam in the server log, but that can't really be helped.
-	--TODO: Ideally this should only be a temporary load
+	local useTempLoad = false
+	
 	if LoadedCells[cell] == nil then
 		logicHandler.LoadCell(cell)
+		useTempLoad = true
 	end
 	
 	if LoadedCells[cell]:ContainsObject(refIndex) and not tableHelper.containsValue(LoadedCells[cell].data.packets.delete, refIndex) then --Shouldn't ever have a delete packet, but it's worth checking anyway
 		--Delete the object for all the players currently online
-		local splitIndex = refIndex:split("-")
-		
-		for onlinePid, player in pairs(Players) do
-			if player:IsLoggedIn() then
-				tes3mp.InitializeEvent(onlinePid)
-				tes3mp.SetEventCell(cell)
-				tes3mp.SetObjectRefNumIndex(splitIndex[1])
-				tes3mp.SetObjectMpNum(splitIndex[2])
-				tes3mp.AddWorldObject()
-				tes3mp.SendObjectDelete()
-			end
-		end
+		logicHandler.DeleteObjectForEveryone(cell, refIndex)
 		
 		LoadedCells[cell]:DeleteObjectData(refIndex)
 		LoadedCells[cell]:Save()
 		--Removing the object from the placed list will be done elsewhere
+	end
+	
+	if useTempLoad then
+		logicHandler.UnloadCell(cell)
 	end
 end
 
@@ -1029,9 +1007,6 @@ end
 Methods.OnCommand = function(pid)
 	showMainGUI(pid)
 end
-
-
-
 
 customCommandHooks.registerCommand("furniture", Methods.OnCommand)
 customCommandHooks.registerCommand("furn", Methods.OnCommand)
