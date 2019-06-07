@@ -57,15 +57,15 @@ local function msg(pid, text)
 end
 
 local function Save()
-	jsonInterface.save("kanaHousing.json", housingData)
+	jsonInterface.save("custom/kanaHousing.json", housingData)
 end
 
 local function Load()
-	housingData = jsonInterface.load("kanaHousing.json")
+	housingData = jsonInterface.load("custom/kanaHousing.json")
 end
 
 Methods.OnServerPostInit = function()
-	if jsonInterface.load("kanaHousing.json") ~= nil then
+	if jsonInterface.load("custom/kanaHousing.json") ~= nil then
 		Load()
 	else
 		Save()
