@@ -97,5 +97,13 @@ Some features, such as the reset info and a house's doors require manually editi
 ### Scripts
 There are a number of functions exposed for other scripts to use, which can be found towards the bottom of the script (more can be easily added) - I will probably try to write up what they are and what they do here eventually.
 
+## Installation
+### General
+- Save `kanaHousing.lua` into `server/scripts/custom`
+### Edits to `customScripts.lua`
+- kanaHousing = require("custom.kanaHousing")
+
+If you have kanaFurniture installed, uncomment (remove the -- at the beginning) the line `kanaFurniture = require("custom.kanaFurniture")` that is after this installation info box in the `lua` file. Requires kanaFurniture release 3 or later.
+
 ## Known Issues
 I don't know of any issues and have tried to test everything to make sure it works, but it's possible that something slipped through the net and made it into the release. If you run into any problems, feel free to contact me so I can get things fixed! You're most likely to find me lurking in the [tes3mp Discord channel](https://discord.gg/ECJk293).
