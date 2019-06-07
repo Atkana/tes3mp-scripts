@@ -1,4 +1,4 @@
--- kanaHousing - Release 1.5 - For tes3mp 0.6.1
+-- kanaHousing - Release 2 - For tes3mp 0.7-alpha
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in server/scripts/custom
@@ -563,7 +563,7 @@ local function unlockChecks(cell)
 		LoadedCells[cell]:Save()
 		for playerId, player in pairs(Players) do
 			if player:IsLoggedIn() then
-				LoadedCells[cell]:SendObjectsLocked(playerId)
+				LoadedCells[cell]:LoadObjectsLocked(playerId, LoadedCells[cell].data.objectData, LoadedCells[cell].data.packets.lock)
 			end
 		end
 	end
