@@ -4,7 +4,7 @@
 1) Save this file as "kanaHousing.lua" in server/scripts/custom
 2) Add [ kanaHousing = require("custom.kanaHousing") ] to the top of customScripts.lua
 
-n) If you have kanaFurniture installed, uncomment (remove the -- at the beginning) the line [ kanaFurniture = require("custom.kanaFurniture") ] that is after this installation info box. Requires kanaFurniture release 2 or later.
+n) If you have kanaFurniture installed, uncomment (remove the -- at the beginning) the line [ kanaFurniture = require("custom.kanaFurniture") ] that is after this installation info box. Requires kanaFurniture release 3 or later.
 ]]
 
 --kanaFurniture = require("custom.kanaFurniture")
