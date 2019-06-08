@@ -440,7 +440,7 @@ Methods.OnObjectActivate = function(eventStatus, pid, cellDescription, objects, 
 end
 
 -- Returning true signals we want to block deletion
-Methods.DeletionCheck = function(pid, cellDescription, objects)
+Methods.DeletionCheck = function(eventStatus, pid, cellDescription, objects)
 	for _,object in pairs(objects) do
         local refId = object.refId
         local uniqueIndex = object.uniqueIndex
