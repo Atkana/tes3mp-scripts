@@ -1,4 +1,4 @@
--- kanaHousing - Release 2 - For tes3mp 0.7-alpha
+-- kanaHousing - Release 2.1 - For tes3mp 0.7-alpha
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in server/scripts/custom
@@ -512,7 +512,7 @@ local function isAllowedEnter(pid, cell)
 			return true, "owner"
 		elseif isCoOwner(pname, hdata.name) then
 			return true, "coowner"
-		elseif Players[pid].data.settings.admin > 0 then --Moderators/Admins should always be allowed to enter
+		elseif Players[pid].data.settings.staffRank > 0 then --Moderators/Admins should always be allowed to enter
 			return true, "admin"
 		elseif cdata.requiredAccess then
 			return true, "access"
