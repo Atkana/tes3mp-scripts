@@ -1,4 +1,4 @@
--- kanaHousing - Release 2.1 - For tes3mp 0.7-alpha
+-- kanaHousing - Release 2.2 - For tes3mp 0.7-alpha
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in server/scripts/custom
@@ -1385,8 +1385,7 @@ end
 
 Methods.OnAdminCommand = function(pid)
 	local rank = Players[pid].data.settings.staffRank
-	--if rank < config.requiredAdminRank then
-	if rank < 2 then
+	if rank < config.requiredAdminRank then
 		--Not high enough rank to use the admin menu
 		return false
 	end
