@@ -16,7 +16,7 @@ classInfo = require("classInfo")
 
 local config = {}
 
-config.mode = "class" -- "basic" or "class"
+config.mode = "basic" -- "basic" or "class"
 --Basic mode sets all attribute increases to a flat value (determined by config.basicAttributeIncreases)
 --Class mode has attribute increases tailored to the character's class (see class mode config options section for config options)
 
