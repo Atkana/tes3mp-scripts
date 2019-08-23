@@ -5,7 +5,7 @@ Collection of all my scripts for tes3mp 0.7 (or, at least, 0.7-prerelease). The 
 ### decorateHelp
 Todo
 ### flatModifiers
-Change the way that the attribute advancement modifiers on level up are calculated. It can be configured to give a flat bonus to all players, or a tailored bonus based on their class. Requires *classInfo*. (Note: Depending on the hotfix level of your version of 0.7-prerelease, the lines `tes3mp.SendSkills(pid)` may not be necessary)
+Change the way that the attribute advancement modifiers on level up are calculated. It can be configured to give a flat bonus to all players, or a tailored bonus based on their class. Requires *classInfo*.
 #### Configuration
 There are a number of configuration options available to edit in the file itself.
 ##### General

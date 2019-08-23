@@ -1,11 +1,8 @@
--- flatModifiers (Advanced) - Release 2.1 - For tes3mp v0.7-prerelease Requires classInfo.
+-- flatModifiers (Advanced) - Release 3 - For tes3mp v0.7-alpha Requires classInfo.
 
 --[[ INSTALLATION
-1) Save this file as "flatModifiers.lua" in mp-stuff/scripts
-2) In serverCore.lua, add the following beneath the line "menuHelper = require("menuHelper")"
-	[ flatModifiers = require("flatModifiers") ]
-3) In serverCore.lua, add the following to the end of OnPlayerLevel
-	[ flatModifiers.OnPlayerLevel(pid) ]
+1) Save this file as "flatModifiers.lua" in server/scripts/custom
+2) Add [ flatModifiers = require("custom.flatModifiers") ] to customScripts.lua
 ]]
 
 --[[ NOTE
@@ -42,7 +39,6 @@ local function basicMode(pid)
 		end
 	end
 	Players[pid]:LoadAttributes()
-	tes3mp.SendSkills(pid) --Required until 0.7-prerelease bug is fixed
 end
 
 local function classMode(pid)
@@ -80,18 +76,18 @@ local function classMode(pid)
 	tes3mp.SendSkills(pid) --Required until 0.7-prerelease bug is fixed
 end
 
-local function doTheThing(pid)
-	if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
-		if config.mode == "basic" then
-			basicMode(pid)
-		else
-			classMode(pid)
+local function doTheThing(eventStatus, pid)
+	if eventStatus.validCustomHandlers then
+		if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
+			if config.mode == "basic" then
+				basicMode(pid)
+			else
+				classMode(pid)
+			end
 		end
 	end
 end
 
-Methods.OnPlayerLevel = function(pid)
-	doTheThing(pid)
-end
+customEventHooks.registerHandler("OnPlayerLevel", doTheThing)
 
 return Methods
