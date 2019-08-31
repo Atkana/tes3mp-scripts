@@ -1,4 +1,4 @@
--- CellReset - Release 7 - For tes3mp 0.7-alpha
+-- CellReset - Release 8 - For tes3mp 0.7-alpha
 -- Adds automated cell resetting via server scripts.
 
 local scriptConfig = {}
@@ -680,7 +680,7 @@ end
 
 customEventHooks.registerValidator("OnCellLoad",Methods.OnCellLoadValidator)
 customEventHooks.registerHandler("OnServerPostInit",Methods.Init)
-customCommandHooks.registerCommand("resettime",Methods.OnTimePrompt)
+customCommandHooks.registerCommand("resettime",Methods.OnTimePromptCommand)
 customCommandHooks.registerCommand("forcereset",Methods.OnForceResetCommand)
 
 return Methods
