@@ -1,4 +1,4 @@
--- kanaFurniture - Release 3 - For tes3mp v0.7-alpha
+-- kanaFurniture - Release 3.1 - For tes3mp v0.7-alpha
 -- REQUIRES: decorateHelp (https://github.com/Atkana/tes3mp-scripts/blob/master/0.7/decorateHelp.lua)
 -- Purchase and place an assortment of furniture
 
@@ -1012,13 +1012,13 @@ customCommandHooks.registerCommand("furniture", Methods.OnCommand)
 customCommandHooks.registerCommand("furn", Methods.OnCommand)
 
 customEventHooks.registerHandler("OnGUIAction", function(eventStatus, pid, idGui, data)
-	if kanaFurniture.OnGUIAction(pid, idGui, data) then
+	if Methods.OnGUIAction(pid, idGui, data) then
 		return
 	end
 end)
 
 customEventHooks.registerHandler("OnServerPostInit", function(eventStatus)
-	kanaFurniture.OnServerPostInit()
+	Methods.OnServerPostInit()
 end)
 
 return Methods
