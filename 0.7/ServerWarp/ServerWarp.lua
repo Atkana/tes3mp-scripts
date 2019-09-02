@@ -1,4 +1,4 @@
--- ServerWarp - Release 2 - For tes3mp 0.7-alpha
+-- ServerWarp - Release 3 - For tes3mp 0.7-alpha
 
 local ServerWarp = {}
 
@@ -366,3 +366,5 @@ customCommandHooks.registerCommand("warpset", ServerWarp.OnSetWarpCommand)
 customCommandHooks.registerCommand("warpsetpublic", ServerWarp.OnSetWarpCommand)
 customCommandHooks.registerCommand("warpremove", ServerWarp.OnRemoveWarpCommand)
 customCommandHooks.registerCommand("warpremovepublic", ServerWarp.OnRemoveWarpCommand)
+
+return ServerWarp
