@@ -1,4 +1,4 @@
--- kanaHousing - Release 2.2 - For tes3mp 0.7-alpha
+-- kanaHousing - Release 2.3 - For tes3mp 0.7-alpha
 
 --[[ INSTALLATION
 1) Save this file as "kanaHousing.lua" in server/scripts/custom
@@ -1656,27 +1656,27 @@ customCommandHooks.registerCommand("adminhousing", Methods.OnAdminCommand)
 customCommandHooks.registerCommand("houseinfo", Methods.OnInfoCommand)
 
 customEventHooks.registerHandler("OnGUIAction", function(eventStatus, pid, idGui, data)
-	if kanaHousing.OnGUIAction(pid, idGui, data) then return end
+	if Methods.OnGUIAction(pid, idGui, data) then return end
 end)
 
 customEventHooks.registerHandler("OnServerPostInit", function(eventStatus)
-	kanaHousing.OnServerPostInit()
+	Methods.OnServerPostInit()
 end)
 
 customEventHooks.registerHandler("OnPlayerCellChange", function(eventStatus, pid, previousCellDescription, currentCellDescription)
-	kanaHousing.OnPlayerCellChange(pid)
+	Methods.OnPlayerCellChange(pid)
 end)
 
 customEventHooks.registerHandler("OnObjectLock", function(eventStatus, pid, cellDescription, objects)
-	kanaHousing.OnObjectLock(pid, cellDescription)
+	Methods.OnObjectLock(pid, cellDescription)
 end)
 
 customEventHooks.registerHandler("OnContainer", function(eventStatus, pid, cellDescription, objects)
-	kanaHousing.OnContainer(pid, cellDescription)
+	Methods.OnContainer(pid, cellDescription)
 end)
 
 customEventHooks.registerHandler("OnObjectDelete", function(eventStatus, pid, cellDescription, objects)
-	kanaHousing.OnObjectDelete(pid, cellDescription)
+	Methods.OnObjectDelete(pid, cellDescription)
 end)
 
 return Methods
