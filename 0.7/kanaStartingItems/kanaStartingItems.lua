@@ -3,7 +3,7 @@
 
 --[[ INSTALLATION:
 1) Save this file as "kanaStartingItems.lua" in server/scripts/custom
-2) Add [ kanaStartingItems = require("custom.kanaStartingItems") ] to the top of customScripts.lua
+2) Add [ kanaStartingItems = require("custom.kanaStartingItems") ] to customScripts.lua
 ]]
 
 --[[ NOTES:
