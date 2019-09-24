@@ -1,7 +1,7 @@
 # kanaStartingItems
 Grant newly created characters some configurable starting items based on their race, class, skills, favored armor, and birthsign.
 
-*Currently written for a version of 0.7-prerelease*
+*Currently written for a version of 0.7-alpha*
 
 ## Usage
 The script works automatically whenever a new character is created. By configuring the script you can govern extra items that a new player is given based off of their:
@@ -33,13 +33,10 @@ Items are listed inside a table, with each entry being a table containing the it
 *(You may notice that the examples don't follow the exact capitalization for each ID type - this is fine, since the script doesn't care about capitalization)*
 
 ## Installation
-### General
-- Save `kanaStartingItems.lua` into your `mp-stuff/scripts` folder
-### Edits to `serverCore.lua`
-- Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaStartingItems = require("kanaStartingItems")```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```kanaStartingItems.Init()```
-### Edits to `eventHandler.lua`
-- Find the line `Players[pid]:EndCharGen()`. Add the following *beneath* it:  ```kanaStartingItems.OnCharacterCreated(pid)```
+### Save the Script
+Save the file as `kanaStartingItems.lua` inside your `server/scripts/custom` folder.
+### Edits to `customScripts.lua`
+- Add `kanaStartingItems = require("custom.kanaStartingItems")`
 
 ## Script Methods
 There are Methods available for other scripts to add items to each of the categories. Check out the file itself to see what's available.
