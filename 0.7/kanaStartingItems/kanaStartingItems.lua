@@ -1,16 +1,9 @@
--- kanaStartingItems - Release 1 - For tes3mp 0.7-prerelease
+-- kanaStartingItems - Release 2 - For tes3mp 0.7-alpha
 -- Grant newly created characters some configurable starting items based on their race, class, skills, favored armor, and birthsign
 
 --[[ INSTALLATION:
-a) Save this file as "kanaStartingItems.lua" in mp-stuff/scripts
-= IN SERVERCORE.LUA =
-a) Find the line [ menuHelper = require("menuHelper") ]. Add the following BENEATH it:
-	[ kanaStartingItems = require("kanaStartingItems") ]
-b) Find the line [ function OnServerPostInit() ]. Add the following BENEATH it:
-	[ kanaStartingItems.Init() ]
-= IN EVENTHANDLER.LUA =
-a) Find the line [ Players[pid]:EndCharGen() ]. Add the following BENEATH it:
-	[ kanaStartingItems.OnCharacterCreated(pid) ]
+1) Save this file as "kanaStartingItems.lua" in server/scripts/custom
+2) Add [ kanaStartingItems = require("custom.kanaStartingItems") ] to the top of customScripts.lua
 ]]
 
 --[[ NOTES:
@@ -169,7 +162,7 @@ local function addItem(pid, refId, count)
 	inventoryHelper.addItem(inventory, refId, (count or 1), -1, -1, "")
 end
 
-Methods.OnCharacterCreated = function(pid)
+Methods.OnCharacterCreated = function(eventStatus, pid)
 	local gaveItems = false --Used to detemine if the script has given the player any items
 
 	-- Add racial items
@@ -203,8 +196,9 @@ Methods.OnCharacterCreated = function(pid)
 	
 	local armorSkills = {mediumarmor = true, heavyarmor = true, lightarmor = true, unarmored = true}
 	
-	for skillId, level in pairs(Players[pid].data.skills) do
+	for skillId, skillInfo in pairs(Players[pid].data.skills) do
 		local skillId = string.lower(skillId)
+		local level = skillInfo.base
 		
 		if level >= scriptConfig.highSkillThreshold then
 			-- Skill is a high skill, add it to the list
@@ -341,6 +335,8 @@ Methods.Init = function()
 	end
 	
 end
-
+-------------
+customEventHooks.registerHandler("OnServerPostInit", Methods.Init)
+customEventHooks.registerHandler("OnPlayerEndCharGen", Methods.OnCharacterCreated)
 -------------
 return Methods
