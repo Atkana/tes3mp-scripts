@@ -3,8 +3,8 @@
 
 --[[ INSTALLATION:
 1) Save this file as "decorateHelp.lua" in mp-stuff/scripts
-2) Add [ decorateHelp = require("decorateHelp") ] to the top of server.lua
-3) Add the following to the elseif chain for commands in "OnPlayerSendMessage" inside server.lua
+2) Add [ decorateHelp = require("decorateHelp") ] to the top of serverCore.lua
+3) Add the following to the elseif chain for commands in "OnPlayerSendMessage" inside serverCore.lua
 
 [	elseif cmd[1] == "decorator" or cmd[1] == "decorate" or cmd[1] == "dh" then
 		decorateHelp.OnCommand(pid) ]
