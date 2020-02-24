@@ -45,7 +45,7 @@ For example: `revivedReceiveMessage` determines the message that a player receiv
 
 ## Installation
 ### General
-- Save `kanaRevive.lua` into `mp-stuff/scripts`
+- Save `kanaRevive.lua` into `server/scripts`
 ### Edits to `serverCore.lua`
 - Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaRevive = require("kanaRevive")```
 - Find the line `eventHandler.OnObjectActivate(pid, cellDescription)`. Add the following *beneath* it: ```kanaRevive.OnObjectActivate(pid, cellDescription)```

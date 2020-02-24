@@ -3,7 +3,7 @@
 
 --[[ INSTALLATION
 = GENERAL =
-a) Save this file as "kanaRevive.lua" in mp-stuff/scripts
+a) Save this file as "kanaRevive.lua" in server/scripts
 
 = IN SERVERCORE.LUA =
 a) Find the line [ menuHelper = require("menuHelper") ]. Add the following BENEATH it:
