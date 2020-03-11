@@ -471,7 +471,7 @@ Methods.OnPlayerDisconnect = function(pid)
 	end
 end
 
-customEventHooks.registerHandler("OnPlayerDisconnect", function(eventStatus, pid)
+customEventHooks.registerValidator("OnPlayerDisconnect", function(eventStatus, pid)
 Methods.OnPlayerDisconnect(pid)
 end)
 
