@@ -369,6 +369,7 @@ customEventHooks.registerValidator("OnPlayerDeath", function(eventStatus, pid)
 		Methods.TrySetPlayerDowned(pid)
 	else
 		tes3mp.SendMessage(pid, Methods.GetLangText("defaultPermanentDeath") .. "\n", false)
+		return customEventHooks.makeEventStatus(false, true)
 	end
 
 	return customEventHooks.makeEventStatus(false, false)
