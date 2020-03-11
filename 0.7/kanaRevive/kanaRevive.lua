@@ -1,4 +1,4 @@
--- kanaRevive - Release 4 customHooked - For tes3mp 0.7-prerelease
+-- kanaRevive - Release 4 - For tes3mp 0.7-alpha
 -- Players enter a downed state before dying. Other players can activate them to revive them!
 
 --[[ INSTALLATION
@@ -6,7 +6,7 @@
  Save this file as "kanaRevive.lua" in server/custom/scripts
 
 = IN CUSTOMSCRIPTS.LUA =
- Add this line: kanaRevive = require("kanaRevive")
+ Add this line: kanaRevive = require("custom.kanaRevive")
 ]]
 
 local scriptConfig = {}
@@ -42,6 +42,9 @@ scriptConfig.markerModel = "o/contain_corpse20.nif"
 scriptConfig.baseObjectType = "miscellaneous"
 scriptConfig.recordRefId = "kanarevivemarker"
 
+-- Set the following to true when running a permadeath server to allow players to be downed instead of dying.
+scriptConfig.allowReviveWithPermadeath = false
+
 
 local lang = {
 	["awaitingReviveMessage"] = "You are awaiting revival.",
@@ -53,7 +56,10 @@ local lang = {
 	["revivedOtherMessage"] = "%receive has been revived by %give.",
 	["bleedoutPlayerMessage"] = "You have died.",
 	["bleedoutOtherMessage"] = "%name has bled out.",
-	
+	["defaultSuicide"] = "%name committed suicide.",
+	["defaultKilledByPlayer"] = "%name was killed by player %killer.",
+	["defaultKilledByOther"] = "%name was killed by %killer.",
+	["defaultPermanentDeath"] = "You have died permanently.",
 	["reviveMarkerName"] = "Player corpse - Use to revive!",
 }
 
@@ -346,8 +352,26 @@ Methods.TrySetPlayerDowned = function(pid)
 end
 
 customEventHooks.registerValidator("OnPlayerDeath", function(eventStatus, pid)
-Methods.TrySetPlayerDowned(pid)
-return customEventHooks.makeEventStatus(false, false)
+	-- Here we replicate some of the tesmp default logic that we're blocking
+	local message
+	if tes3mp.DoesPlayerHavePlayerKiller(pid) and tes3mp.GetPlayerKillerPid(pid) ~= pid then
+		local killerPid = tes3mp.GetPlayerKillerPid(pid)
+		message = Methods.GetLangText("defaultKilledByPlayer", {name = logicHandler.GetChatName(pid), killer = logicHandler.GetChatName(killerPid)})
+	elseif killerName = tes3mp.GetPlayerKillerName(pid) ~= "" then
+		message = Methods.GetLangText("defaultKilledByOther", {name = logicHandler.GetChatName(pid), killer = tes3mp.GetPlayerKillerName(pid)})
+	else
+		message = Methods.GetLangText("defaultSuicide")
+	end
+	
+	tes3mp.SendMessage(pid, message .. "\n", true)
+	
+	if config.playersRespawn or scriptConfig.allowReviveWithPermadeath then
+		Methods.TrySetPlayerDowned(pid)
+	else
+		tes3mp.SendMessage(pid, Methods.GetLangText("defaultPermanentDeath") .. "\n", false)
+	end
+
+	return customEventHooks.makeEventStatus(false, false)
 end)
 
 -------------
