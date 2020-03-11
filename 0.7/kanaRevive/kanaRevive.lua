@@ -1,43 +1,12 @@
--- kanaRevive - Release 3 - For tes3mp 0.7-prerelease
+-- kanaRevive - Release 4 customHooked - For tes3mp 0.7-prerelease
 -- Players enter a downed state before dying. Other players can activate them to revive them!
 
 --[[ INSTALLATION
 = GENERAL =
-a) Save this file as "kanaRevive.lua" in server/scripts
+ Save this file as "kanaRevive.lua" in server/custom/scripts
 
-= IN SERVERCORE.LUA =
-a) Find the line [ menuHelper = require("menuHelper") ]. Add the following BENEATH it:
-	[ kanaRevive = require("kanaRevive") ]
-b) Find the line [ eventHandler.OnObjectActivate(pid, cellDescription) ]. Add the following BENEATH it:
-	[ kanaRevive.OnObjectActivate(pid, cellDescription) ]
-c) Find the line [ function OnServerPostInit() ]. Add the following BENEATH it:
-	[ kanaRevive.OnServerPostInit() ]
-d) Find the line [ function OnPlayerDisconnect(pid) ]. Add the following BENEATH it:
-	[ kanaRevive.OnPlayerDisconnect(pid) ]
-
-= IN EVENTHANDLER.LUA =
-a) Find the line [ Players[pid]:Message("You have successfully logged in.\n" .. config.chatWindowInstructions) ] . Add the following BENEATH it:
-	[ kanaRevive.OnPlayerLogin(pid) ]
-
-= IN COMMANDHANDLER.LUA =
-a) Find the section:
-	[ else
-		local message = "Not a valid command. Type /help for more info.\n" ]
-	Add the following ABOVE it:
-	[ elseif cmd[1] == "die" then
-		kanaRevive.OnDieCommand(pid) ]
-
-= IN PLAYER/BASE.LUA =
-a) Find the section:
-	[ self.resurrectTimerId = tes3mp.CreateTimerEx("OnDeathTimeExpiration",
-            time.seconds(config.deathTime), "i", self.pid)
-        tes3mp.StartTimer(self.resurrectTimerId) ]
-	REPLACE it with the following:
-	[ kanaRevive.TrySetPlayerDowned(self.pid) ]
-b) If you're running a permadeath server, but want players to have the opportunity to revive, locate (and possibly edit) the line
-	[ tes3mp.SendMessage(self.pid, "You have died permanently.", false) ]
-	Add the following ABOVE/BELOW it:
-	[ kanaRevive.TrySetPlayerDowned(self.pid) ]
+= IN CUSTOMSCRIPTS.LUA =
+ Add this line: kanaRevive = require("kanaRevive")
 ]]
 
 local scriptConfig = {}
@@ -376,6 +345,11 @@ Methods.TrySetPlayerDowned = function(pid)
 	end
 end
 
+customEventHooks.registerValidator("OnPlayerDeath", function(eventStatus, pid)
+Methods.TrySetPlayerDowned(pid)
+return customEventHooks.makeEventStatus(false, false)
+end)
+
 -------------
 Methods.OnDieCommand = function(pid)
 	-- Only do anything if the player is actually downed
@@ -383,6 +357,8 @@ Methods.OnDieCommand = function(pid)
 		return Methods.OnBleedoutExpire(pid)
 	end
 end
+
+customCommandHooks.registerCommand("die", Methods.OnDieCommand)
 
 Methods.OnPlayerLogin = function(pid)
 	-- If the player logged out while bleeding out, trigger them being downed again
@@ -392,6 +368,10 @@ Methods.OnPlayerLogin = function(pid)
 		return Methods.SetPlayerDowned(pid, remaining)
 	end
 end
+
+customEventHooks.registerHandler("OnPlayerFinishLogin", function (eventStatus, pid)
+Methods.OnPlayerLogin(pid)
+end)
 
 Methods.OnObjectActivate = function(pid, cellDescription)
 	-- A lot of this code is copied from eventHandler.OnObjectActivate
@@ -439,6 +419,10 @@ Methods.OnObjectActivate = function(pid, cellDescription)
 	end
 end
 
+customEventHooks.registerHandler("OnObjectActivate", function(eventStatus, pid, cellDescription, objects, players)
+Methods.OnObjectActivate(pid, cellDescription)
+end)	
+
 Methods.OnServerPostInit = function()
 	-- Detect if this script's permanent record has been created on this server yet
 	-- If it hasn't, create it
@@ -451,12 +435,20 @@ Methods.OnServerPostInit = function()
 	end
 end
 
+customEventHooks.registerHandler("OnServerPostInit", function(eventStatus)
+Methods.OnServerPostInit()
+end)
+
 Methods.OnPlayerDisconnect = function(pid)
 	-- Remove the revive markers of players who disconnect
 	if Methods.IsPlayerDowned(pid) and scriptConfig.useMarkers then
 		Methods.RemoveReviveMarker(pidMarkerLookup[pid])
 	end
 end
+
+customEventHooks.registerHandler("OnPlayerDisconnect", function(eventStatus, pid)
+Methods.OnPlayerDisconnect(pid)
+end)
 
 -------------
 function BleedoutTick(pid)
