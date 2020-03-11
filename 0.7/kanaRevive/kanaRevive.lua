@@ -357,10 +357,10 @@ customEventHooks.registerValidator("OnPlayerDeath", function(eventStatus, pid)
 	if tes3mp.DoesPlayerHavePlayerKiller(pid) and tes3mp.GetPlayerKillerPid(pid) ~= pid then
 		local killerPid = tes3mp.GetPlayerKillerPid(pid)
 		message = Methods.GetLangText("defaultKilledByPlayer", {name = logicHandler.GetChatName(pid), killer = logicHandler.GetChatName(killerPid)})
-	elseif killerName = tes3mp.GetPlayerKillerName(pid) ~= "" then
+	elseif tes3mp.GetPlayerKillerName(pid) ~= "" then
 		message = Methods.GetLangText("defaultKilledByOther", {name = logicHandler.GetChatName(pid), killer = tes3mp.GetPlayerKillerName(pid)})
 	else
-		message = Methods.GetLangText("defaultSuicide")
+		message = Methods.GetLangText("defaultSuicide", {name = logicHandler.GetChatName(pid)})
 	end
 	
 	tes3mp.SendMessage(pid, message .. "\n", true)
