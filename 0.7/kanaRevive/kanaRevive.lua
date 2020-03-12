@@ -43,7 +43,7 @@ scriptConfig.baseObjectType = "miscellaneous"
 scriptConfig.recordRefId = "kanarevivemarker"
 
 -- Set the following to true when running a permadeath server to allow players to be downed instead of dying.
-scriptConfig.allowReviveWithPermadeath = false
+scriptConfig.allowReviveWithPermadeath = true
 
 
 local lang = {
@@ -119,6 +119,9 @@ Methods.CreateReviveMarker = function(pid)
 			logicHandler.DeleteObjectForPlayer(pid, cellDescription, uniqueIndex)
 		end
 	end
+	
+	-- A little bit extra to maybe ensure that the player whose marker it is doesn't see it
+	logicHandler.DeleteObjectForPlayer(pid, cellDescription, uniqueIndex)
 end
 
 Methods.RemoveReviveMarker = function(uniqueIndex, cellDescriptionGiven)
@@ -171,11 +174,19 @@ Methods.SendMessageToAllOnServer = function(message, exceptionPids)
 end
 
 Methods.IsPlayerDowned = function(pid)
-    if Players[pid] ~= nil then
-        return Players[pid].data.customVariables.isDowned or false
-    else
-        return false
-    end
+	if Players[pid] ~= nil then
+			return Players[pid].data.customVariables.isDowned or false
+	else
+			return false
+	end
+end
+
+Methods.CanRevivePlayer = function(pid)
+	if Players[pid] ~= nil then
+		return not Players[pid].data.customVariables.cannotRevive
+	else
+		return false
+	end
 end
 
 
@@ -267,7 +278,11 @@ Methods.OnBleedoutExpire = function(pid)
 	Players[pid].data.customVariables.isDowned = false
 	
 	-- Inform the player
-	tes3mp.SendMessage(pid, Methods.GetLangText("bleedoutPlayerMessage") .. "\n")
+	if config.playersRespawn then
+		tes3mp.SendMessage(pid, Methods.GetLangText("bleedoutPlayerMessage") .. "\n")
+	else
+		tes3mp.SendMessage(pid, Methods.GetLangText("defaultPermanentDeath") .. "\n")
+	end
 	
 	-- Inform others if configured
 	local exemptPids = {pid}
@@ -286,6 +301,10 @@ Methods.OnBleedoutExpire = function(pid)
 		-- While we could just jump straight to using Resurrect, we'll faff through the proper channels...
 		-- Note: Might have to instead start the regular dying timer, just to be safe
 		OnDeathTimeExpiration(pid)
+	else
+		-- Set a flag permanently preventing the player from being able to be revived
+		Players[pid].data.customVariables.cannotRevive = true
+		
 	end
 	
 	-- Cleanup the player's revive marker, if created
@@ -304,6 +323,7 @@ Methods.SetPlayerDowned = function(pid, timeRemaining)
 		Players[pid].data.customVariables.bleedoutTicks = 0
 	else
 		secondsLeft = timeRemaining
+		Players[pid].data.customVariables.bleedoutTicks = scriptConfig.bleedoutTime - secondsLeft
 	end
 	
 	-- Send the first basic messages
@@ -343,11 +363,19 @@ Methods.SetPlayerDowned = function(pid, timeRemaining)
 	tes3mp.SendMessage(pid, Methods.GetLangText("giveInPrompt") .. "\n")
 end
 
--- Used by the edits for regular dying.
--- Because the death event fires after login happens, we need to check to see if the player has already resumed a bleedout state (otherwise the death event overwrites it and restarts the counter)
+-- We use this to set a player to the downed state when they die, with a special case for if the player has logged back in after being downed (using a flag set during in Methods.OnPlayerLogin to know)
+-- And also obviously we only want to set the player downed if they aren't already
 Methods.TrySetPlayerDowned = function(pid)
-	if not Methods.IsPlayerDowned(pid) then
-		return Methods.SetPlayerDowned(pid)
+	if Players[pid].data.customVariables.cannotRevive == true then
+		-- Do nothing
+	elseif Players[pid].data.customVariables.loggedOutDowned == true then
+		local remaining = scriptConfig.bleedoutTime - Players[pid].data.customVariables.bleedoutTicks
+		-- Clear the logout flag
+		Players[pid].data.customVariables.loggedOutDowned = nil
+		
+		Methods.SetPlayerDowned(pid, remaining)
+	elseif not Methods.IsPlayerDowned(pid) then
+		Methods.SetPlayerDowned(pid)
 	end
 end
 
@@ -386,11 +414,12 @@ end
 customCommandHooks.registerCommand("die", Methods.OnDieCommand)
 
 Methods.OnPlayerLogin = function(pid)
-	-- If the player logged out while bleeding out, trigger them being downed again
+	-- Check if a player logged out while downed
+	-- If they did, set the flags up for them to resume bleeding out when their death event triggers
 	if Players[pid].data.customVariables.isDowned then
-		local remaining = scriptConfig.bleedoutTime - Players[pid].data.customVariables.bleedoutTicks
-		
-		return Methods.SetPlayerDowned(pid, remaining)
+		Players[pid]:SetHealthCurrent(0) -- Just to ensure they're always dead
+		Players[pid].data.customVariables.loggedOutDowned = true
+		-- The rest of setting up / resuming is left to the death event
 	end
 end
 
