@@ -1,7 +1,7 @@
 # kanaRevive
 Players enter a downed state instead of dying. Other players can activate them to revive them before they bleedout.
 
-*Currently written for a version of 0.7-prerelease*
+*Currently written for a version of 0.7-aplha*
 
 ## Usage
 When a player is killed, instead of dying, they enter a "downed" state - with a countdown until they die properly commencing (time, and whether there is a countdown are configurable). If another player activates them, the player is instantly revived, with their health, magicka, and fatigue being set to a value based on configuration options. While downed, the player has access to the `/die` command, which they can use to instantly trigger their death. If a player logs out during their bleedout countdown, they will resume from the point they left off when they next log in.
@@ -12,6 +12,7 @@ Configuration is done from within the file itself, by altering the `scriptConfig
 There are two options for governing how bleedout works:
 - `useBleedout` - If set to `true`, then a countdown will begin once a player is downed. If the timer runs out before the player is revived, they die properly. If set to `false`, the countdown doesn't begin, and the players will remain downed indefinitely until they're either revived, or they use the `/die` command.
 - `bleedoutTime` - This determines the time (in seconds) that a player has before their countdown runs out. Obviously only relevant if `useBleedout` is set to `true`.
+- `allowReviveWithPermadeath` - An option for permadeath servers to allow players to enter a downed state before dying. Set to `true` to enable this.
 ### Broadcast Options
 Announcements are made into chat whenever: a player enters the downed state, a player is revived, a player who was downed dies. The "range" that these messages can be heard by other players can be set to three values:
 - `"server"` - The message is broadcast to everyone on the server.
@@ -46,29 +47,8 @@ For example: `revivedReceiveMessage` determines the message that a player receiv
 ## Installation
 ### General
 - Save `kanaRevive.lua` into `server/scripts`
-### Edits to `serverCore.lua`
-- Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaRevive = require("kanaRevive")```
-- Find the line `eventHandler.OnObjectActivate(pid, cellDescription)`. Add the following *beneath* it: ```kanaRevive.OnObjectActivate(pid, cellDescription)```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ```kanaRevive.OnServerPostInit()```
-- Find the line `function OnPlayerDisconnect(pid)`. Add the following *beneath* it: ```kanaRevive.OnPlayerDisconnect(pid)```
-### Edits to `eventHandler.lua`
-- Find the line `Players[pid]:Message("You have successfully logged in.\n" .. config.chatWindowInstructions)`. Add the following *beneath* it: ```kanaRevive.OnPlayerLogin(pid)```
-### Edits to `commandHandler.lua`
-- Find the section
-```
-else
-	local message = "Not a valid command. Type /help for more info.\n"
-```
-Add the following *above* it: `elseif cmd[1] == "die" then kanaRevive.OnDieCommand(pid)`
-### Edits to `player/base.lua`
-- Find the section
-```
-self.resurrectTimerId = tes3mp.CreateTimerEx("OnDeathTimeExpiration",
-	time.seconds(config.deathTime), "i", self.pid)
-tes3mp.StartTimer(self.resurrectTimerId)
-```
-*Replace* it with the following: `kanaRevive.TrySetPlayerDowned(self.pid)`
-- If you're running a permadeath server, but want players to have the opportunity to revive, locate (and possibly edit) the line `tes3mp.SendMessage(self.pid, "You have died permanently.", false)`. Add the following either above/below it (the order doesn't matter): `kanaRevive.TrySetPlayerDowned(self.pid)`
+### Edits to `customScripts.lua`
+- Add this line: `kanaRevive = require("custom.kanaRevive")`
 
 ## Known Issues
 A script like this is awkward to test on my own, so there is the possibility that bugs might've slipped through my testing. Contact me if you find anything!
