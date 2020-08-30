@@ -1,5 +1,5 @@
 
--- decorateHelp - Release 2 - For tes3mp v0.7.0-alpha
+-- decorateHelp - Release 3 - For tes3mp v0.7.0-alpha
 -- Alter positions of items using a GUI
 
 --[[ INSTALLATION:
@@ -96,7 +96,10 @@ local function resendPlaceToAll(refIndex, cell)
 		end
 	end
 	
-	tableHelper.insertValueIfMissing(LoadedCells[cell].data.packets.scale, refIndex)
+	-- Make sure to save a scale packet if this object has a non-default scale.
+	if scale ~= 1 then
+		tableHelper.insertValueIfMissing(LoadedCells[cell].data.packets.scale, refIndex)
+	end
 	LoadedCells[cell]:QuicksaveToDrive() --Not needed, but it's nice to do anyways
 end
 
