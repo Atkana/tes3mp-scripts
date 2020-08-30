@@ -1,5 +1,4 @@
-
--- decorateHelp - Release 3 - For tes3mp v0.7.0-alpha
+-- decorateHelp - Release 4 - For tes3mp v0.7.0-alpha
 -- Alter positions of items using a GUI
 
 --[[ INSTALLATION:
@@ -172,7 +171,7 @@ local function onEnterPrompt(pid, data)
 			object.scale = scale - 0.1
 		end
 	elseif mode == "Fine Tune Scale" then
-		if data <= config.ScaleMax or data >= config.ScaleMin then
+		if data <= config.ScaleMax and data >= config.ScaleMin then
 			object.scale = data
 		end
 	elseif mode == "return" then
