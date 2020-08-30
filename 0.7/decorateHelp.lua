@@ -1,5 +1,5 @@
 
--- decorateHelp - Release 2 - For tes3mp v0.7.0-alpha
+-- decorateHelp - Release 3 - For tes3mp v0.7.0-alpha
 -- Alter positions of items using a GUI
 
 --[[ INSTALLATION:
@@ -12,6 +12,8 @@ local config = {}
 
 config.MainId = 31360
 config.PromptId = 31361
+config.ScaleMin = 0.5
+config.ScaleMax = 2.0
 ------
 
 Methods = {}
@@ -48,6 +50,7 @@ local function resendPlaceToAll(refIndex, cell)
 	local posX, posY, posZ = object.location.posX, object.location.posY, object.location.posZ
 	local rotX, rotY, rotZ = object.location.rotX, object.location.rotY, object.location.rotZ
 	local refIndex = refIndex
+	local scale = object.scale or 1
 	
 	local inventory = object.inventory or nil
 	
@@ -73,6 +76,7 @@ local function resendPlaceToAll(refIndex, cell)
 			tes3mp.SetObjectRotation(rotX, rotY, rotZ)
 			tes3mp.SetObjectRefNumIndex(0)
 			tes3mp.SetObjectMpNum(splitIndex[2])
+			tes3mp.SetObjectScale(scale)
 			if inventory then
 				for itemIndex, item in pairs(inventory) do
 					tes3mp.SetContainerItemRefId(item.refId)
@@ -85,20 +89,33 @@ local function resendPlaceToAll(refIndex, cell)
 			
 			tes3mp.AddWorldObject()
 			tes3mp.SendObjectPlace()
+			tes3mp.SendObjectScale()
 			if inventory then
 				tes3mp.SendContainer()
 			end
 		end
 	end
 	
-	LoadedCells[cell]:Save() --Not needed, but it's nice to do anyways
+	-- Make sure to save a scale packet if this object has a non-default scale.
+	if scale ~= 1 then
+		tableHelper.insertValueIfMissing(LoadedCells[cell].data.packets.scale, refIndex)
+	end
+	LoadedCells[cell]:QuicksaveToDrive() --Not needed, but it's nice to do anyways
 end
 
 
 local function showPromptGUI(pid)
 	local message = "[" .. playerCurrentMode[tes3mp.GetName(pid)] .. "] - Enter a number."
-
-	tes3mp.InputDialog(pid, config.PromptId, message, "Enter a number to add/subtract.\nPositives increase.\nNegatives decrease.")
+	local pname = tes3mp.GetName(pid)
+	local cell = tes3mp.GetCell(pid)
+	
+	if playerCurrentMode[pname] == "Fine Tune Scale" then
+		local object = getObject(playerSelectedObject[pname], cell)
+		local scale = object.scale or 1
+		tes3mp.InputDialog(pid, config.PromptId, message, "Current scale: " .. scale .. "\nMinimum value: " .. config.ScaleMin .. "\nMaximum value: " .. config.ScaleMax)
+	else
+		tes3mp.InputDialog(pid, config.PromptId, message, "Enter a number to add/subtract.\nPositives increase.\nNegatives decrease.")
+	end
 end
 
 local function onEnterPrompt(pid, data)
@@ -113,6 +130,8 @@ local function onEnterPrompt(pid, data)
 		--The object no longer exists, so we should bail out now
 		return false
 	end
+	
+	local scale = object.scale or 1
 	
 	if mode == "Rotate X" then
 		local curDegrees = math.deg(object.location.rotX)
@@ -144,6 +163,18 @@ local function onEnterPrompt(pid, data)
 		object.location.posY = object.location.posY + 10
 	elseif mode == "Move South" then
 		object.location.posY = object.location.posY - 10
+	elseif mode == "Scale Up" then
+		if scale + 0.1 <= config.ScaleMax then 
+			object.scale = scale + 0.1
+		end
+	elseif mode == "Scale Down" then
+		if scale - 0.1 >= config.ScaleMin then
+			object.scale = scale - 0.1
+		end
+	elseif mode == "Fine Tune Scale" then
+		if data <= config.ScaleMax or data >= config.ScaleMin then
+			object.scale = data
+		end
 	elseif mode == "return" then
 		object.location.posY = object.location.posY		
 		return
@@ -163,7 +194,7 @@ local function showMainGUI(pid)
 	end
 	
 	local message = "Select an option. Your current item is: " .. currentItem
-	tes3mp.CustomMessageBox(pid, config.MainId, message, "Select Furniture;Fine Tune North;Fine Tune East;Fine Tune Height;Rotate X;Rotate Y;Rotate Z;Raise;Lower;Move East;Move West;Move North;Move South;Exit")
+	tes3mp.CustomMessageBox(pid, config.MainId, message, "Select Furniture;Fine Tune North;Fine Tune East;Fine Tune Height;Rotate X;Rotate Y;Rotate Z;Raise;Lower;Move East;Move West;Move North;Move South;Scale Up;Scale Down;Fine Tune Scale;Exit")
 end
 
 local function setSelectedObject(pid, refIndex)
@@ -240,8 +271,20 @@ Methods.OnGUIAction = function(pid, idGui, data)
 		elseif tonumber(data) == 12 then --South
 			playerCurrentMode[pname] = "Move South"
 			onEnterPrompt(pid, 0)
-			return true, showMainGUI(pid)			
-		elseif tonumber(data) == 13 then --Close
+			return true, showMainGUI(pid)
+		elseif tonumber(data) == 13 then -- Scale up by 0.1
+			playerCurrentMode[pname] = "Scale Up"
+			onEnterPrompt(pid, 0)
+			return true, showMainGUI(pid)
+		elseif tonumber(data) == 14 then -- Scale down by 0.1
+			playerCurrentMode[pname] = "Scale Down"
+			onEnterPrompt(pid, 0)
+			return true, showMainGUI(pid)
+		elseif tonumber(data) == 15 then -- Scale
+			playerCurrentMode[pname] = "Fine Tune Scale"
+			showPromptGUI(pid)
+			return true
+		elseif tonumber(data) == 16 then --Close
 			--Do nothing
 			return true
 		end
