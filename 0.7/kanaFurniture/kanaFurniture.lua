@@ -242,7 +242,7 @@ local furnitureData = {
 {name = "Banner (Ritual)", refId = "furn_c_t_ritual_01", price = 100},
 {name = "Banner (Shadow)", refId = "furn_c_t_shadow_01", price = 100},
 {name = "Banner (Steed)", refId = "furn_c_t_steed_01", price = 100},
-{name = "Banner (Thief)", refId = "furn_c_t_thief_01", price = 100},
+{name = "Banner (Thief)", refId = "furn_c_t_theif_01", price = 100},
 {name = "Banner (Tower)", refId = "furn_c_t_tower_01", price = 100},
 {name = "Banner (Warrior)", refId = "furn_c_t_warrior_01", price = 100},
 {name = "Banner (Wizard)", refId = "furn_c_t_wizard_01", price = 100},
