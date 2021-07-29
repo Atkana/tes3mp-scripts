@@ -1,4 +1,4 @@
--- kanaFurniture - Release 3.1 - For tes3mp v0.7-alpha
+-- kanaFurniture - Release 3.2 - For tes3mp v0.7-alpha
 -- REQUIRES: decorateHelp (https://github.com/Atkana/tes3mp-scripts/blob/master/0.7/decorateHelp.lua)
 -- Purchase and place an assortment of furniture
 
