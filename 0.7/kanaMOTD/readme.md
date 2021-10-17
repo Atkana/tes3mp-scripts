@@ -24,11 +24,7 @@ The script itself works automatically, displaying the MOTD to all players who jo
 
 ## Installation
 ### General
-- Save `kanaMOTD.lua` into your `mp-stuff/scripts` folder
-- Save `kanaMOTD.json` into your `mp-stuff/data` folder
-### Edits to `serverCore.lua`
-- Find the line `menuHelper = require("menuHelper")`. Add the following *beneath* it: ```kanaMOTD = require("kanaMOTD")```
-- Find the line `function OnServerPostInit()`. Add the following *beneath* it: ``` kanaMOTD.Init()```
-### Edits to `eventHandler.lua`
-- Find the line `Players[pid]:EndCharGen()`. Add the following *beneath* it:  ```kanaMOTD.ShowMOTD(pid)```
-- Find the line `Players[pid]:Message("You have successfully logged in.\n" .. config.chatWindowInstructions)`. Add the following *beneath* it: ```kanaMOTD.ShowMOTD(pid)```
+- Save `kanaMOTD.lua` into your `server/scripts/custom` folder
+- Save `kanaMOTD.json` into your `server/data/custom` folder
+### Edits to `customScripts.lua`
+- `kanaMOTD = require("custom.kanaMOTD")`
