@@ -1,19 +1,10 @@
--- kanaMOTD - Release 1 - For tes3mp 0.7-prerelease
+-- kanaMOTD - Release 2 - For tes3mp 0.7-prerelease
 -- Adds a MOTD message.
 
 --[[ INSTALLATION:
-a) Save this file as "kanaMOTD.lua" in mp-stuff/scripts
-b) Save the json file as "kanaMOTD.json" in mp-stuff/data
-= IN SERVERCORE.LUA =
-a) Find the line [ menuHelper = require("menuHelper") ]. Add the following BENEATH it:
-	[ kanaMOTD = require("kanaMOTD") ]
-b) Find the line [ function OnServerPostInit() ]. Add the following BENEATH it:
-	[ kanaMOTD.Init() ]
-= IN EVENTHANDLER.LUA =
-a) Find the line [ Players[pid]:EndCharGen() ]. Add the following BENEATH it:
-	[ kanaMOTD.ShowMOTD(pid) ]
-b) Find the line [ Players[pid]:Message("You have successfully logged in.\n" .. config.chatWindowInstructions) ]. Add the following BENEATH it:
-	[ kanaMOTD.ShowMOTD(pid) ]
+1) Save this file as "kanaMOTD.lua" in scripts/custom
+2) Save the json file as "kanaMOTD.json" in data/custom
+3) Add [ kanaMOTD = require("custom.kanaMOTD") ] to the top of customScripts.lua
 ]]
 
 local scriptConfig = {}
@@ -54,12 +45,12 @@ Methods.ProcessText = function(text)
 end
 
 Methods.Load = function()
-	local loadedData = jsonInterface.load("kanaMOTD.json")
+	local loadedData = jsonInterface.load("custom/kanaMOTD.json")
 	MOTDmessage = loadedData.mainMessage
 	MOTDtitle = loadedData.title
 end
 
-Methods.ShowMOTD = function(pid)
+Methods.ShowMOTD = function(eventStatus, pid)
 	-- If configured to load from file, refresh the message in case the file has been changed
 	if scriptConfig.loadFromFile then
 		Methods.Load()
@@ -100,6 +91,11 @@ Methods.Init = function()
 		lowerColors[string.lower(key)] = colorCode
 	end
 end
+
+---------------------------------------------------------------------------------------
+
+customEventHooks.registerHandler("OnServerPostInit", Methods.Init)
+customEventHooks.registerHandler("OnPlayerAuthentified", Methods.ShowMOTD)
 
 ---------------------------------------------------------------------------------------
 return Methods
